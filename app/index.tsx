@@ -68,7 +68,6 @@ export default function HomeScreen() {
       )}
 
       <View style={{ padding: 20, gap: 12 }}>
-        <Text style={{ fontSize: 22, fontWeight: "700" }}>Home</Text>
 
         <Link href="/user_setup" asChild>
           <Pressable style={{ padding: 12, borderWidth: 1, borderRadius: 10 }}>

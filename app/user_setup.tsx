@@ -26,12 +26,15 @@ export default function UserSetupScreen() {
   // Metric inputs
   const [heightCmInput, setHeightCmInput] = useState("");
   const [beltCmInput, setBeltCmInput] = useState("");
+  const [shoulderCmInput, setShoulderCmInput] = useState("");
 
   // Imperial inputs
   const [heightFtInput, setHeightFtInput] = useState("");
   const [heightInInput, setHeightInInput] = useState("");
   const [beltFtInput, setBeltFtInput] = useState("");
   const [beltInInput, setBeltInInput] = useState("");
+  const [shoulderFtInput, setShoulderFtInput] = useState("");
+  const [shoulderInInput, setShoulderInInput] = useState("");
 
   // Load saved dimensions on mount
   useEffect(() => {
@@ -50,16 +53,33 @@ export default function UserSetupScreen() {
       if (useMetric) {
         setHeightCmInput(String(Math.round(dimensions.heightCm)));
         setBeltCmInput(String(Math.round(dimensions.groundToBeltCm)));
+        setShoulderCmInput(String(Math.round(dimensions.shoulderToFingertipCm)));
       } else {
         const h = cmToFeetInches(dimensions.heightCm);
         const b = cmToFeetInches(dimensions.groundToBeltCm);
+        const s = cmToFeetInches(dimensions.shoulderToFingertipCm);
         setHeightFtInput(String(h.feet));
         setHeightInInput(String(h.inches));
         setBeltFtInput(String(b.feet));
         setBeltInInput(String(b.inches));
+        setShoulderFtInput(String(s.feet));
+        setShoulderInInput(String(s.inches));
       }
     }
     setIsEditing(true);
+  }
+
+  // Clear all inputs
+  function clearInputs() {
+    setHeightCmInput("");
+    setBeltCmInput("");
+    setShoulderCmInput("");
+    setHeightFtInput("");
+    setHeightInInput("");
+    setBeltFtInput("");
+    setBeltInInput("");
+    setShoulderFtInput("");
+    setShoulderInInput("");
   }
 
   // Cancel editing
@@ -67,34 +87,33 @@ export default function UserSetupScreen() {
     if (dimensions) {
       setIsEditing(false);
     }
-    // Clear inputs
-    setHeightCmInput("");
-    setBeltCmInput("");
-    setHeightFtInput("");
-    setHeightInInput("");
-    setBeltFtInput("");
-    setBeltInInput("");
+    clearInputs();
   }
 
   // Save dimensions
   async function saveDimensions() {
     let heightCm: number;
     let groundToBeltCm: number;
+    let shoulderToFingertipCm: number;
 
     if (useMetric) {
       heightCm = parseFloat(heightCmInput) || 0;
       groundToBeltCm = parseFloat(beltCmInput) || 0;
+      shoulderToFingertipCm = parseFloat(shoulderCmInput) || 0;
     } else {
       const hFt = parseFloat(heightFtInput) || 0;
       const hIn = parseFloat(heightInInput) || 0;
       const bFt = parseFloat(beltFtInput) || 0;
       const bIn = parseFloat(beltInInput) || 0;
+      const sFt = parseFloat(shoulderFtInput) || 0;
+      const sIn = parseFloat(shoulderInInput) || 0;
       heightCm = feetInchesToCm(hFt, hIn);
       groundToBeltCm = feetInchesToCm(bFt, bIn);
+      shoulderToFingertipCm = feetInchesToCm(sFt, sIn);
     }
 
-    if (heightCm <= 0 || groundToBeltCm <= 0) {
-      Alert.alert("Invalid Input", "Please enter valid values for both fields.");
+    if (heightCm <= 0 || groundToBeltCm <= 0 || shoulderToFingertipCm <= 0) {
+      Alert.alert("Invalid Input", "Please enter valid values for all fields.");
       return;
     }
 
@@ -107,6 +126,7 @@ export default function UserSetupScreen() {
       heightCm,
       groundToBeltCm,
       beltToHeadCm: heightCm - groundToBeltCm,
+      shoulderToFingertipCm,
       frontSensorDistanceAtTouch: dimensions?.frontSensorDistanceAtTouch,
     };
 
@@ -201,6 +221,9 @@ export default function UserSetupScreen() {
             <Text style={{ fontSize: 16, opacity: 0.7 }}>
               Belt to Head: {formatValue(dimensions.beltToHeadCm)}
             </Text>
+            <Text style={{ fontSize: 16 }}>
+              Shoulder to Fingertip: {formatValue(dimensions.shoulderToFingertipCm)}
+            </Text>
           </View>
 
           <Pressable
@@ -252,7 +275,7 @@ export default function UserSetupScreen() {
                 <TextInput
                   value={heightFtInput}
                   onChangeText={setHeightFtInput}
-                  placeholder="Feet"
+                  placeholder="Feet (e.g., 5)"
                   placeholderTextColor="#999"
                   keyboardType="numeric"
                   style={{
@@ -267,7 +290,7 @@ export default function UserSetupScreen() {
                 <TextInput
                   value={heightInInput}
                   onChangeText={setHeightInInput}
-                  placeholder="Inches"
+                  placeholder="Inches (e.g., 9)"
                   placeholderTextColor="#999"
                   keyboardType="numeric"
                   style={{
@@ -306,7 +329,7 @@ export default function UserSetupScreen() {
                 <TextInput
                   value={beltFtInput}
                   onChangeText={setBeltFtInput}
-                  placeholder="Feet"
+                  placeholder="Feet (e.g., 3)"
                   placeholderTextColor="#999"
                   keyboardType="numeric"
                   style={{
@@ -321,7 +344,7 @@ export default function UserSetupScreen() {
                 <TextInput
                   value={beltInInput}
                   onChangeText={setBeltInInput}
-                  placeholder="Inches"
+                  placeholder="Inches (e.g., 3)"
                   placeholderTextColor="#999"
                   keyboardType="numeric"
                   style={{
@@ -337,7 +360,61 @@ export default function UserSetupScreen() {
             )}
           </View>
 
-          {/* Save/Cancel buttons */}
+          {/* Shoulder to Fingertip Input */}
+          <View style={{ gap: 4 }}>
+            <Text style={{ fontSize: 14, opacity: 0.7 }}>Shoulder to Fingertip</Text>
+            {useMetric ? (
+              <TextInput
+                value={shoulderCmInput}
+                onChangeText={setShoulderCmInput}
+                placeholder="Shoulder to fingertip in cm (e.g., 65)"
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#ddd",
+                  borderRadius: 10,
+                  padding: 12,
+                  fontSize: 16,
+                }}
+              />
+            ) : (
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                <TextInput
+                  value={shoulderFtInput}
+                  onChangeText={setShoulderFtInput}
+                  placeholder="Feet (e.g., 2)"
+                  placeholderTextColor="#999"
+                  keyboardType="numeric"
+                  style={{
+                    flex: 1,
+                    borderWidth: 1,
+                    borderColor: "#ddd",
+                    borderRadius: 10,
+                    padding: 12,
+                    fontSize: 16,
+                  }}
+                />
+                <TextInput
+                  value={shoulderInInput}
+                  onChangeText={setShoulderInInput}
+                  placeholder="Inches (e.g., 2)"
+                  placeholderTextColor="#999"
+                  keyboardType="numeric"
+                  style={{
+                    flex: 1,
+                    borderWidth: 1,
+                    borderColor: "#ddd",
+                    borderRadius: 10,
+                    padding: 12,
+                    fontSize: 16,
+                  }}
+                />
+              </View>
+            )}
+          </View>
+
+          {/* Save/Cancel/Clear buttons */}
           <View style={{ flexDirection: "row", gap: 12, marginTop: 4 }}>
             {dimensions && (
               <Pressable
@@ -354,6 +431,20 @@ export default function UserSetupScreen() {
                 <Text>Cancel</Text>
               </Pressable>
             )}
+
+            <Pressable
+              onPress={clearInputs}
+              style={{
+                flex: 1,
+                padding: 12,
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor: "#ddd",
+                alignItems: "center",
+              }}
+            >
+              <Text>Clear</Text>
+            </Pressable>
 
             <Pressable
               onPress={saveDimensions}
