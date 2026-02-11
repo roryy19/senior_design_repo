@@ -4,6 +4,7 @@ import { jsx } from "react/jsx-runtime";
 
 const KEY = "placed_sensors_v1"
 const USER_DIMENSIONS_KEY = "user_dimensions_v1"
+const FONT_SCALE_KEY = "font_scale_v1"
 
 // note - promise = type-safe way to handle async ops, value doesnt have to be present
 export async function loadSensors(): Promise<PlacedSensor[]> {
@@ -70,4 +71,21 @@ export async function loadUserDimensions(): Promise<UserDimensions | null> {
 
 export async function saveUserDimensions(dimensions: UserDimensions): Promise<void> {
     await AsyncStorage.setItem(USER_DIMENSIONS_KEY, JSON.stringify(dimensions));
+}
+
+// Font scale storage
+export async function loadFontScale(): Promise<number> {
+    const raw = await AsyncStorage.getItem(FONT_SCALE_KEY);
+    if (!raw) return 1;
+
+    try {
+        const parsed = parseFloat(raw);
+        return isNaN(parsed) ? 1 : parsed;
+    } catch {
+        return 1;
+    }
+}
+
+export async function saveFontScale(scale: number): Promise<void> {
+    await AsyncStorage.setItem(FONT_SCALE_KEY, String(scale));
 }

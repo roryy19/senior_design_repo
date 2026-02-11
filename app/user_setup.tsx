@@ -4,6 +4,7 @@ import { Stack } from "expo-router";
 
 import type { UserDimensions } from "../src/domain/types";
 import { loadUserDimensions, saveUserDimensions } from "../src/storage/registry";
+import { useFontSize } from "../src/context/FontSizeContext";
 
 // Conversion helpers
 function cmToFeetInches(cm: number): { feet: number; inches: number } {
@@ -22,6 +23,7 @@ export default function UserSetupScreen() {
   const [dimensions, setDimensions] = useState<UserDimensions | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [useMetric, setUseMetric] = useState(false);
+  const { fontScale } = useFontSize();
 
   // Metric inputs
   const [heightCmInput, setHeightCmInput] = useState("");
@@ -172,7 +174,7 @@ export default function UserSetupScreen() {
             alignItems: "center",
           }}
         >
-          <Text style={{ fontWeight: !useMetric ? "600" : "400" }}>Imperial (ft/in)</Text>
+          <Text style={{ fontWeight: !useMetric ? "600" : "400", fontSize: 16 * fontScale }}>Imperial (ft/in)</Text>
         </Pressable>
 
         <Pressable
@@ -187,12 +189,12 @@ export default function UserSetupScreen() {
             alignItems: "center",
           }}
         >
-          <Text style={{ fontWeight: useMetric ? "600" : "400" }}>Metric (cm)</Text>
+          <Text style={{ fontWeight: useMetric ? "600" : "400", fontSize: 16 * fontScale }}>Metric (cm)</Text>
         </Pressable>
       </View>
 
       {/* Helper text */}
-      <Text style={{ opacity: 0.6, fontSize: 14 }}>
+      <Text style={{ opacity: 0.6, fontSize: 14 * fontScale }}>
         {useMetric
           ? "Enter values in centimeters (cm)"
           : "Enter values in feet and inches"}
@@ -209,19 +211,19 @@ export default function UserSetupScreen() {
             gap: 8,
           }}
         >
-          <Text style={{ fontSize: 18, fontWeight: "600" }}>Your Dimensions</Text>
+          <Text style={{ fontSize: 18 * fontScale, fontWeight: "600" }}>Your Dimensions</Text>
 
           <View style={{ gap: 4 }}>
-            <Text style={{ fontSize: 16 }}>
+            <Text style={{ fontSize: 16 * fontScale }}>
               Height: {formatValue(dimensions.heightCm)}
             </Text>
-            <Text style={{ fontSize: 16 }}>
+            <Text style={{ fontSize: 16 * fontScale }}>
               Ground to Belt: {formatValue(dimensions.groundToBeltCm)}
             </Text>
-            <Text style={{ fontSize: 16, opacity: 0.7 }}>
+            <Text style={{ fontSize: 16 * fontScale, opacity: 0.7 }}>
               Belt to Head: {formatValue(dimensions.beltToHeadCm)}
             </Text>
-            <Text style={{ fontSize: 16 }}>
+            <Text style={{ fontSize: 16 * fontScale }}>
               Shoulder to Fingertip: {formatValue(dimensions.shoulderToFingertipCm)}
             </Text>
           </View>
@@ -237,7 +239,7 @@ export default function UserSetupScreen() {
               alignSelf: "flex-start",
             }}
           >
-            <Text style={{ color: "black", fontWeight: "600" }}>Edit</Text>
+            <Text style={{ color: "black", fontWeight: "600", fontSize: 16 * fontScale }}>Edit</Text>
           </Pressable>
         </View>
       ) : (
@@ -250,11 +252,11 @@ export default function UserSetupScreen() {
             gap: 12,
           }}
         >
-          <Text style={{ fontSize: 18, fontWeight: "600" }}>Enter Your Dimensions</Text>
+          <Text style={{ fontSize: 18 * fontScale, fontWeight: "600" }}>Enter Your Dimensions</Text>
 
           {/* Height Input */}
           <View style={{ gap: 4 }}>
-            <Text style={{ fontSize: 14, opacity: 0.7 }}>Height</Text>
+            <Text style={{ fontSize: 14 * fontScale, opacity: 0.7 }}>Height</Text>
             {useMetric ? (
               <TextInput
                 value={heightCmInput}
@@ -267,7 +269,7 @@ export default function UserSetupScreen() {
                   borderColor: "#ddd",
                   borderRadius: 10,
                   padding: 12,
-                  fontSize: 16,
+                  fontSize: 16 * fontScale,
                 }}
               />
             ) : (
@@ -284,7 +286,7 @@ export default function UserSetupScreen() {
                     borderColor: "#ddd",
                     borderRadius: 10,
                     padding: 12,
-                    fontSize: 16,
+                    fontSize: 16 * fontScale,
                   }}
                 />
                 <TextInput
@@ -299,7 +301,7 @@ export default function UserSetupScreen() {
                     borderColor: "#ddd",
                     borderRadius: 10,
                     padding: 12,
-                    fontSize: 16,
+                    fontSize: 16 * fontScale,
                   }}
                 />
               </View>
@@ -308,7 +310,7 @@ export default function UserSetupScreen() {
 
           {/* Ground to Belt Input */}
           <View style={{ gap: 4 }}>
-            <Text style={{ fontSize: 14, opacity: 0.7 }}>Ground to Belt</Text>
+            <Text style={{ fontSize: 14 * fontScale, opacity: 0.7 }}>Ground to Belt</Text>
             {useMetric ? (
               <TextInput
                 value={beltCmInput}
@@ -321,7 +323,7 @@ export default function UserSetupScreen() {
                   borderColor: "#ddd",
                   borderRadius: 10,
                   padding: 12,
-                  fontSize: 16,
+                  fontSize: 16 * fontScale,
                 }}
               />
             ) : (
@@ -338,7 +340,7 @@ export default function UserSetupScreen() {
                     borderColor: "#ddd",
                     borderRadius: 10,
                     padding: 12,
-                    fontSize: 16,
+                    fontSize: 16 * fontScale,
                   }}
                 />
                 <TextInput
@@ -353,7 +355,7 @@ export default function UserSetupScreen() {
                     borderColor: "#ddd",
                     borderRadius: 10,
                     padding: 12,
-                    fontSize: 16,
+                    fontSize: 16 * fontScale,
                   }}
                 />
               </View>
@@ -362,7 +364,7 @@ export default function UserSetupScreen() {
 
           {/* Shoulder to Fingertip Input */}
           <View style={{ gap: 4 }}>
-            <Text style={{ fontSize: 14, opacity: 0.7 }}>Shoulder to Fingertip</Text>
+            <Text style={{ fontSize: 14 * fontScale, opacity: 0.7 }}>Shoulder to Fingertip</Text>
             {useMetric ? (
               <TextInput
                 value={shoulderCmInput}
@@ -375,7 +377,7 @@ export default function UserSetupScreen() {
                   borderColor: "#ddd",
                   borderRadius: 10,
                   padding: 12,
-                  fontSize: 16,
+                  fontSize: 16 * fontScale,
                 }}
               />
             ) : (
@@ -392,7 +394,7 @@ export default function UserSetupScreen() {
                     borderColor: "#ddd",
                     borderRadius: 10,
                     padding: 12,
-                    fontSize: 16,
+                    fontSize: 16 * fontScale,
                   }}
                 />
                 <TextInput
@@ -407,7 +409,7 @@ export default function UserSetupScreen() {
                     borderColor: "#ddd",
                     borderRadius: 10,
                     padding: 12,
-                    fontSize: 16,
+                    fontSize: 16 * fontScale,
                   }}
                 />
               </View>
@@ -428,7 +430,7 @@ export default function UserSetupScreen() {
                   alignItems: "center",
                 }}
               >
-                <Text>Cancel</Text>
+                <Text style={{ fontSize: 16 * fontScale }}>Cancel</Text>
               </Pressable>
             )}
 
@@ -443,7 +445,7 @@ export default function UserSetupScreen() {
                 alignItems: "center",
               }}
             >
-              <Text>Clear</Text>
+              <Text style={{ fontSize: 16 * fontScale }}>Clear</Text>
             </Pressable>
 
             <Pressable
@@ -457,7 +459,7 @@ export default function UserSetupScreen() {
                 alignItems: "center",
               }}
             >
-              <Text style={{ fontWeight: "600" }}>Save</Text>
+              <Text style={{ fontWeight: "600", fontSize: 16 * fontScale }}>Save</Text>
             </Pressable>
           </View>
         </View>
@@ -476,9 +478,9 @@ export default function UserSetupScreen() {
             alignItems: "center",
           }}
         >
-          <Text style={{ fontWeight: "600", color: "#666" }}>Configure Front Sensor</Text>
+          <Text style={{ fontWeight: "600", color: "#666", fontSize: 16 * fontScale }}>Configure Front Sensor</Text>
         </Pressable>
-        <Text style={{ marginTop: 8, fontSize: 12, opacity: 0.5, textAlign: "center" }}>
+        <Text style={{ marginTop: 8, fontSize: 12 * fontScale, opacity: 0.5, textAlign: "center" }}>
           Requires belt sensor connection
         </Text>
       </View>

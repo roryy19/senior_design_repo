@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx expo install expo-speech)"
+      "Bash(npx expo install expo-speech)",
+      "Bash(grep:*)",
+      "Bash(tree:*)"
     ]
   }
 }
