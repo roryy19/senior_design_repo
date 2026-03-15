@@ -1,8 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { PlacedSensor } from "../domain/types";
+import { PlacedSensor, UserDimensions } from "../domain/types";
 import { jsx } from "react/jsx-runtime";
 
 const KEY = "placed_sensors_v1"
+const USER_DIMENSIONS_KEY = "user_dimensions_v1"
+const FONT_SCALE_KEY = "font_scale_v1"
 
 // note - promise = type-safe way to handle async ops, value doesnt have to be present
 export async function loadSensors(): Promise<PlacedSensor[]> {
@@ -47,9 +49,43 @@ export async function updateSensor(updated: PlacedSensor): Promise<PlacedSensor[
 
 export async function removeSensor(id: string): Promise<PlacedSensor[]> {
     const current = await loadSensors();
-    
+
     // filter keeps only the ones that match condition, so keeps all but sensor with ID to remove
     const next = current.filter((s) => s.id != id);
     await saveSensors(next);
     return next;
+}
+
+// User dimensions storage
+export async function loadUserDimensions(): Promise<UserDimensions | null> {
+    const raw = await AsyncStorage.getItem(USER_DIMENSIONS_KEY);
+    if (!raw) return null;
+
+    try {
+        const parsed = JSON.parse(raw) as UserDimensions;
+        return parsed;
+    } catch {
+        return null;
+    }
+}
+
+export async function saveUserDimensions(dimensions: UserDimensions): Promise<void> {
+    await AsyncStorage.setItem(USER_DIMENSIONS_KEY, JSON.stringify(dimensions));
+}
+
+// Font scale storage
+export async function loadFontScale(): Promise<number> {
+    const raw = await AsyncStorage.getItem(FONT_SCALE_KEY);
+    if (!raw) return 1;
+
+    try {
+        const parsed = parseFloat(raw);
+        return isNaN(parsed) ? 1 : parsed;
+    } catch {
+        return 1;
+    }
+}
+
+export async function saveFontScale(scale: number): Promise<void> {
+    await AsyncStorage.setItem(FONT_SCALE_KEY, String(scale));
 }
