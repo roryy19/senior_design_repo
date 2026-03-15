@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, Alert } from "react-native";
 import { Link, useFocusEffect } from "expo-router";
 import * as Speech from "expo-speech";
@@ -6,12 +6,43 @@ import * as Speech from "expo-speech";
 import type { PlacedSensor } from "../src/domain/types";
 import { loadSensors } from "../src/storage/registry";
 import { useFontSize } from "../src/context/FontSizeContext";
+import { useBle } from "../src/context/BleContext";
+import type { BleConnectionState } from "../src/ble/BleService";
+
+function bleStatusLabel(state: BleConnectionState, scanDots: string): string {
+  switch (state) {
+    case 'scanning':   return `Scanning${scanDots}`;
+    case 'connecting': return 'Connecting...';
+    case 'connected':  return 'Connected to Belt';
+    default:           return 'Not Connected';
+  }
+}
+
+function bleStatusDotColor(state: BleConnectionState): string {
+  if (state === 'connected') return '#34c759';
+  if (state === 'scanning' || state === 'connecting') return '#ff9500';
+  return '#999';
+}
 
 export default function HomeScreen() {
   const [sensors, setSensors] = useState<PlacedSensor[]>([]);
   const [debugBanner, setDebugBanner] = useState<string | null>(null);
   const bannerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { fontScale, setFontScale } = useFontSize();
+  const { connectionState, startScan, disconnect, lastAlert } = useBle();
+  const [dotCount, setDotCount] = useState(1);
+
+  // Animate dots while scanning: . → .. → ... → . (cycles every 500ms)
+  useEffect(() => {
+    if (connectionState !== 'scanning') {
+      setDotCount(1);
+      return;
+    }
+    const interval = setInterval(() => {
+      setDotCount(prev => (prev % 3) + 1);
+    }, 500);
+    return () => clearInterval(interval);
+  }, [connectionState]);
 
   // Reload sensors every time screen comes into focus
   useFocusEffect(
@@ -23,40 +54,43 @@ export default function HomeScreen() {
     }, [])
   );
 
-  // Simulate sensor trigger
+  // Show banner + speak when a real BLE alert arrives from the belt
+  useEffect(() => {
+    if (!lastAlert) return;
+    const message =
+      lastAlert.payload.type === 'beacon'
+        ? `${lastAlert.sensorName ?? 'Sensor'} ahead`
+        : `Obstacle ${lastAlert.sensorName ?? 'detected'}`;
+    showAlert(message);
+  }, [lastAlert?.id]);
+
+  function showAlert(message: string) {
+    if (bannerTimeoutRef.current) clearTimeout(bannerTimeoutRef.current);
+    setDebugBanner(message);
+    Speech.speak(message);
+    bannerTimeoutRef.current = setTimeout(() => setDebugBanner(null), 3000);
+  }
+
   function simulateTrigger() {
     if (sensors.length === 0) {
       Alert.alert("No Sensors", "Add sensors in the Sensor List first.");
       return;
     }
+    const sensor = sensors[Math.floor(Math.random() * sensors.length)];
+    showAlert(`${sensor.name} ahead`);
+  }
 
-    // Clear previous timeout if exists
-    if (bannerTimeoutRef.current) {
-      clearTimeout(bannerTimeoutRef.current);
+  function handleConnectPress() {
+    if (connectionState === 'connected') {
+      disconnect();
+    } else {
+      startScan();
     }
-
-    // Pick random sensor
-    const randomIndex = Math.floor(Math.random() * sensors.length);
-    const sensor = sensors[randomIndex];
-
-    // Message to display and speak
-    const message = `${sensor.name} ahead`;
-
-    // Show banner
-    setDebugBanner(message);
-
-    // Speak the message
-    Speech.speak(message);
-
-    // Auto-dismiss after 3 seconds
-    bannerTimeoutRef.current = setTimeout(() => {
-      setDebugBanner(null);
-    }, 3000);
   }
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Debug Banner */}
+      {/* Alert Banner */}
       {debugBanner && (
         <View
           style={{
@@ -70,6 +104,46 @@ export default function HomeScreen() {
       )}
 
       <View style={{ flex: 1, padding: 20, gap: 12 }}>
+
+        {/* BLE Connection Status */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+            padding: 12,
+            borderWidth: 1,
+            borderRadius: 10,
+            borderColor: '#ddd',
+          }}
+        >
+          <View
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 5,
+              backgroundColor: bleStatusDotColor(connectionState),
+            }}
+          />
+          <Text style={{ flex: 1, fontSize: 15 * fontScale }}>
+            {bleStatusLabel(connectionState, '.'.repeat(dotCount))}
+          </Text>
+          {connectionState !== 'scanning' && connectionState !== 'connecting' && (
+            <Pressable
+              onPress={handleConnectPress}
+              style={{
+                paddingVertical: 6,
+                paddingHorizontal: 14,
+                borderRadius: 8,
+                backgroundColor: connectionState === 'connected' ? '#ff3b30' : '#007aff',
+              }}
+            >
+              <Text style={{ color: 'white', fontWeight: '600', fontSize: 14 * fontScale }}>
+                {connectionState === 'connected' ? 'Disconnect' : 'Connect'}
+              </Text>
+            </Pressable>
+          )}
+        </View>
 
         <Link href="/user_setup" asChild>
           <Pressable style={{ padding: 12, borderWidth: 1, borderRadius: 10 }}>

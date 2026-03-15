@@ -21,6 +21,7 @@ export default function SensorListScreen() {
   // UI state for "Add Sensor" modal
   const [addOpen, setAddOpen] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newMac, setNewMac] = useState("");
 
   // UI state for "Edit Sensor" modal
   const [editOpen, setEditOpen] = useState(false);
@@ -37,6 +38,7 @@ export default function SensorListScreen() {
   // Open add modal
   function openAdd() {
     setNewName("");
+    setNewMac("");
     setAddOpen(true);
   }
 
@@ -48,6 +50,7 @@ export default function SensorListScreen() {
     const newSensor: PlacedSensor = {
       id: makeId(),
       name,
+      macAddress: newMac.trim() || undefined,
     };
 
     const next = [newSensor, ...sensors];
@@ -60,6 +63,7 @@ export default function SensorListScreen() {
   function openEdit(sensor: PlacedSensor) {
     setEditingSensor(sensor); // sensor that is being edited
     setNewName(sensor.name); // prefill input with current name
+    setNewMac(sensor.macAddress ?? "");
     setEditOpen(true);
   }
 
@@ -68,8 +72,8 @@ export default function SensorListScreen() {
     const name = newName.trim();
     if (!name || !editingSensor) return;
 
-    // create new sensor with all field the same except name
-    const updated: PlacedSensor = {...editingSensor, name};
+    // create new sensor with all fields the same except name and macAddress
+    const updated: PlacedSensor = { ...editingSensor, name, macAddress: newMac.trim() || undefined };
     
     const next = await updateSensor(updated);
     setSensors(next);
@@ -108,6 +112,9 @@ export default function SensorListScreen() {
         }}
       >
         <Text style={{ fontSize: 18 * fontScale, fontWeight: "600" }}>{item.name}</Text>
+        {item.macAddress && (
+          <Text style={{ fontSize: 13 * fontScale, color: '#666', marginTop: 2 }}>{item.macAddress}</Text>
+        )}
 
         <View
           style={{
@@ -208,6 +215,21 @@ export default function SensorListScreen() {
               }}
             />
 
+            <TextInput
+              value={newMac}
+              onChangeText={setNewMac}
+              placeholder="MAC Address (e.g., AA:BB:CC:DD:EE:FF)"
+              placeholderTextColor="#666"
+              autoCapitalize="characters"
+              style={{
+                borderWidth: 1,
+                borderColor: "#ddd",
+                borderRadius: 10,
+                padding: 12,
+                fontSize: 16 * fontScale,
+              }}
+            />
+
             <View style={{ flexDirection: "row", gap: 12 }}>
               <Pressable
                 onPress={() => setAddOpen(false)}
@@ -266,6 +288,21 @@ export default function SensorListScreen() {
               onChangeText={setNewName}
               placeholder="Name (e.g., Stairs)"
               autoFocus
+              style={{
+                borderWidth: 1,
+                borderColor: "#ddd",
+                borderRadius: 10,
+                padding: 12,
+                fontSize: 16 * fontScale,
+              }}
+            />
+
+            <TextInput
+              value={newMac}
+              onChangeText={setNewMac}
+              placeholder="MAC Address (e.g., AA:BB:CC:DD:EE:FF)"
+              placeholderTextColor="#666"
+              autoCapitalize="characters"
               style={{
                 borderWidth: 1,
                 borderColor: "#ddd",
