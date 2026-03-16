@@ -124,28 +124,41 @@ static const struct ble_gatt_svc_def gatt_services[] = {
     { 0 } /* terminator */
 };
 
+/* ---------- Forward declarations ---------- */
+
+static int ble_gap_event_handler(struct ble_gap_event *event, void *arg);
+
 /* ---------- Advertising ---------- */
 
 static void start_advertising(void)
 {
     struct ble_gap_adv_params adv_params = {0};
     struct ble_hs_adv_fields fields = {0};
+    struct ble_hs_adv_fields rsp_fields = {0};
 
-    /* Advertise as connectable + general discoverable */
+    /* Advertising packet: flags + 128-bit service UUID (21 bytes, fits in 31) */
     fields.flags = BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP;
-
-    /* Include the device name in the advertising packet */
-    const char *name = ble_svc_gap_device_name();
-    fields.name = (uint8_t *)name;
-    fields.name_len = strlen(name);
-    fields.name_is_complete = 1;
-
-    /* Include the 128-bit service UUID so the phone can filter for it */
     fields.uuids128 = &BELT_SERVICE_UUID;
     fields.num_uuids128 = 1;
     fields.uuids128_is_complete = 1;
 
-    ble_gap_adv_set_fields(&fields);
+    int rc = ble_gap_adv_set_fields(&fields);
+    if (rc != 0) {
+        ESP_LOGE(TAG, "Failed to set adv fields, rc=%d", rc);
+        return;
+    }
+
+    /* Scan response packet: device name (fits separately) */
+    const char *name = ble_svc_gap_device_name();
+    rsp_fields.name = (uint8_t *)name;
+    rsp_fields.name_len = strlen(name);
+    rsp_fields.name_is_complete = 1;
+
+    rc = ble_gap_adv_rsp_set_fields(&rsp_fields);
+    if (rc != 0) {
+        ESP_LOGE(TAG, "Failed to set scan response fields, rc=%d", rc);
+        return;
+    }
 
     /* Connectable, undirected advertising */
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;

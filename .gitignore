@@ -40,6 +40,10 @@ yarn-error.*
 /ios
 /android
 
+# ESP-IDF firmware build artifacts
+firmware/esp/build/
+firmware/esp/sdkconfig
+
 # Claude
 CLAUDE.md
 .claude/
