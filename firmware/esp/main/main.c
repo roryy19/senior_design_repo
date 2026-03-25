@@ -1,15 +1,15 @@
 /*
- * BLE Test Firmware for Obstacle Detection Belt
+ * Obstacle Detection Belt — ESP32-S3 Firmware
  *
- * This is a MINIMAL test firmware for the ESP32-S3. It does NOT read sensors
- * or drive motors. It only validates that the phone app can:
- *   1. Find the belt via BLE scan
- *   2. Connect to it
- *   3. Receive alert notifications (a fake beacon alert every 5 seconds)
- *   4. Send config writes (arm length — printed to serial terminal)
+ * BLE peripheral (phone connects to belt) + BLE observer (scans for beacons).
+ * When a known beacon enters proximity, the belt:
+ *   1. Plays a stored TTS audio clip through the speaker (always)
+ *   2. Sends a beacon alert to the phone via BLE notify (if connected)
+ *
+ * Audio clips are stored in SPIFFS flash, sent from the phone during setup.
+ * The belt operates independently at runtime — phone connection is optional.
  *
  * Flash with:   idf.py -p COMx flash monitor
- * (replace COMx with the actual COM port, e.g. COM3)
  */
 
 #include <stdio.h>
@@ -26,7 +26,14 @@
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 
+#include "beacon_scanner.h"
+#include "audio_player.h"
+#include "clip_storage.h"
+
 static const char *TAG = "BELT_BLE";
+
+/* GPIO pin for audio PWM output (connect to RC filter -> LM386 input) */
+#define AUDIO_GPIO GPIO_NUM_1
 
 /* ---------- UUIDs (must match src/ble/uuids.ts in the phone app) ----------
  *
@@ -50,51 +57,184 @@ static const ble_uuid128_t CONFIG_CHAR_UUID =
     BLE_UUID128_INIT(0xa9, 0x26, 0x1b, 0x36, 0x07, 0xea, 0xf5, 0xb7,
                      0x88, 0x46, 0xe1, 0x36, 0x3e, 0x48, 0xb5, 0xbe);
 
-/* ---------- State ---------- */
+/* ---------- BLE connection state ---------- */
 
-static uint16_t conn_handle = 0;           /* current connection handle */
-static bool connected = false;              /* is a phone connected? */
-static uint16_t alert_attr_handle = 0;      /* attribute handle for alert char */
-static bool notify_enabled = false;         /* has the phone subscribed to alerts? */
+static uint16_t conn_handle = 0;
+static bool connected = false;
+static uint16_t alert_attr_handle = 0;
+static bool notify_enabled = false;
 
-/* ---------- Fake test data ---------- */
+/* ---------- Audio clip receive buffer ---------- */
 
-/* A fake beacon MAC address: 11:22:33:44:55:66
- * Alert packet format: [0x01, B0, B1, B2, B3, B4, B5]
- * The phone app will look up this MAC in the sensor list. If you add a
- * sensor with MAC "11:22:33:44:55:66" in the app, it will speak that name. */
-static const uint8_t fake_beacon_alert[] = {
-    0x01,                               /* type = beacon */
-    0x11, 0x22, 0x33, 0x44, 0x55, 0x66  /* MAC address */
-};
+/* Temporary buffer for receiving audio chunks from the phone.
+ * Chunks arrive via CONFIG_CHAR writes and are assembled here,
+ * then written to SPIFFS when the "audio end" command is received. */
+static uint8_t audio_recv_buf[MAX_CLIP_SIZE];
+static size_t  audio_recv_len = 0;
+static uint8_t audio_recv_mac[BEACON_MAC_LEN]; /* MAC of clip being received */
+static bool    audio_recv_active = false;
+
+/* Playback buffer — loaded from SPIFFS when a beacon is detected */
+static uint8_t playback_buf[MAX_CLIP_SIZE];
+
+/* ---------- Send beacon alert to phone ---------- */
+
+static void send_beacon_alert(const uint8_t *mac_le)
+{
+    if (!connected || !notify_enabled) return;
+
+    /* Build alert packet: [0x01, MAC_B0..B5] in big-endian (phone expects this) */
+    uint8_t alert[7];
+    alert[0] = 0x01;           /* type = beacon */
+    alert[1] = mac_le[5];     /* Reverse NimBLE LE → phone's expected BE */
+    alert[2] = mac_le[4];
+    alert[3] = mac_le[3];
+    alert[4] = mac_le[2];
+    alert[5] = mac_le[1];
+    alert[6] = mac_le[0];
+
+    struct os_mbuf *om = ble_hs_mbuf_from_flat(alert, sizeof(alert));
+    int rc = ble_gatts_notify_custom(conn_handle, alert_attr_handle, om);
+
+    if (rc == 0) {
+        ESP_LOGI(TAG, "Sent beacon alert: MAC=%02X:%02X:%02X:%02X:%02X:%02X",
+                 alert[1], alert[2], alert[3], alert[4], alert[5], alert[6]);
+    } else {
+        ESP_LOGW(TAG, "Failed to send beacon alert, rc=%d", rc);
+    }
+}
+
+/* ---------- Beacon proximity callback ---------- */
+
+/* Called by beacon_scanner when a known beacon enters proximity.
+ * Plays local audio AND sends BLE alert to phone (if connected). */
+static void on_beacon_detected(const uint8_t *mac_le, int beacon_index)
+{
+    ESP_LOGI(TAG, "Beacon %d detected! Playing audio + notifying phone", beacon_index);
+
+    /* 1. Play local audio from flash (always, regardless of phone connection) */
+    if (clip_storage_exists(mac_le)) {
+        size_t clip_len = clip_storage_read(mac_le, playback_buf, sizeof(playback_buf));
+        if (clip_len > 0) {
+            audio_player_play(playback_buf, clip_len);
+        }
+    } else {
+        ESP_LOGW(TAG, "No audio clip stored for beacon %d", beacon_index);
+    }
+
+    /* 2. Send BLE alert to phone (only if connected and subscribed) */
+    send_beacon_alert(mac_le);
+}
 
 /* ---------- Config characteristic write handler ---------- */
 
+/*
+ * Config command types (phone → belt):
+ *   0x01: Arm length      [0x01, N]
+ *   0x02: Audio chunk      [0x02, MAC[6], IDX_hi, IDX_lo, PCM_DATA...]
+ *   0x03: Audio end        [0x03, MAC[6]]
+ *   0x04: Register beacon  [0x04, MAC[6]]
+ */
 static int config_write_cb(uint16_t conn_handle_arg, uint16_t attr_handle,
                            struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
-    /* Read the bytes the phone sent */
     uint16_t len = OS_MBUF_PKTLEN(ctxt->om);
-    uint8_t buf[32];
+    uint8_t buf[256];
     if (len > sizeof(buf)) len = sizeof(buf);
     os_mbuf_copydata(ctxt->om, 0, len, buf);
 
-    if (len >= 2 && buf[0] == 0x01) {
-        ESP_LOGI(TAG, "Received arm length from phone: %d cm", buf[1]);
-    } else {
-        ESP_LOGI(TAG, "Received unknown config write (%d bytes)", len);
+    if (len < 1) return 0;
+
+    switch (buf[0]) {
+
+    case 0x01: /* Arm length */
+        if (len >= 2) {
+            ESP_LOGI(TAG, "Received arm length from phone: %d cm", buf[1]);
+        }
+        break;
+
+    case 0x02: /* Audio chunk */
+        if (len < 9) { /* 1 type + 6 MAC + 2 chunk index = 9 min */
+            ESP_LOGW(TAG, "Audio chunk too short (%d bytes)", len);
+            break;
+        }
+        {
+            uint8_t *mac = &buf[1];
+            uint16_t chunk_idx = (buf[7] << 8) | buf[8];
+            uint8_t *pcm_data = &buf[9];
+            size_t pcm_len = len - 9;
+
+            /* If this is a new transfer (first chunk or different MAC), reset buffer */
+            if (!audio_recv_active ||
+                memcmp(audio_recv_mac, mac, BEACON_MAC_LEN) != 0) {
+                /* MAC from phone is big-endian, convert to little-endian for storage */
+                audio_recv_mac[0] = mac[5];
+                audio_recv_mac[1] = mac[4];
+                audio_recv_mac[2] = mac[3];
+                audio_recv_mac[3] = mac[2];
+                audio_recv_mac[4] = mac[1];
+                audio_recv_mac[5] = mac[0];
+                audio_recv_len = 0;
+                audio_recv_active = true;
+                ESP_LOGI(TAG, "Starting audio receive for MAC=%02X:%02X:%02X:%02X:%02X:%02X",
+                         mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+            }
+
+            /* Append PCM data to receive buffer */
+            if (audio_recv_len + pcm_len <= MAX_CLIP_SIZE) {
+                memcpy(&audio_recv_buf[audio_recv_len], pcm_data, pcm_len);
+                audio_recv_len += pcm_len;
+                ESP_LOGD(TAG, "Audio chunk %d: %d bytes (total %d)",
+                         chunk_idx, (int)pcm_len, (int)audio_recv_len);
+            } else {
+                ESP_LOGW(TAG, "Audio buffer overflow at chunk %d", chunk_idx);
+            }
+        }
+        break;
+
+    case 0x03: /* Audio end */
+        if (len >= 7 && audio_recv_active) {
+            /* Write accumulated audio to flash */
+            if (clip_storage_write(audio_recv_mac, audio_recv_buf, audio_recv_len)) {
+                ESP_LOGI(TAG, "Audio clip stored: %d bytes (%.1fs)",
+                         (int)audio_recv_len, (float)audio_recv_len / 8000.0f);
+
+                /* Automatically add this MAC to the beacon scan list */
+                beacon_scanner_add_beacon(audio_recv_mac);
+            }
+            audio_recv_active = false;
+            audio_recv_len = 0;
+        }
+        break;
+
+    case 0x04: /* Register beacon MAC (no audio, just add to scan list) */
+        if (len >= 7) {
+            uint8_t mac_le[BEACON_MAC_LEN];
+            /* Convert big-endian (phone) → little-endian (NimBLE) */
+            mac_le[0] = buf[6];
+            mac_le[1] = buf[5];
+            mac_le[2] = buf[4];
+            mac_le[3] = buf[3];
+            mac_le[4] = buf[2];
+            mac_le[5] = buf[1];
+            beacon_scanner_add_beacon(mac_le);
+        }
+        break;
+
+    default:
+        ESP_LOGI(TAG, "Received unknown config type 0x%02X (%d bytes)", buf[0], len);
+        break;
     }
 
     return 0;
 }
 
-/* ---------- Alert characteristic read handler (required but not used) ---------- */
+/* ---------- Alert characteristic read handler ---------- */
 
 static int alert_read_cb(uint16_t conn_handle_arg, uint16_t attr_handle,
                          struct ble_gatt_access_ctxt *ctxt, void *arg)
 {
-    /* Return the fake beacon alert as the current value */
-    os_mbuf_append(ctxt->om, fake_beacon_alert, sizeof(fake_beacon_alert));
+    /* No static data to return — alerts are push-only via notify */
     return 0;
 }
 
@@ -113,7 +253,7 @@ static const struct ble_gatt_svc_def gatt_services[] = {
                 .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
             },
             {
-                /* Config characteristic — phone writes arm length etc. */
+                /* Config characteristic — phone writes config and audio data */
                 .uuid = &CONFIG_CHAR_UUID.u,
                 .access_cb = config_write_cb,
                 .flags = BLE_GATT_CHR_F_WRITE,
@@ -167,7 +307,15 @@ static void start_advertising(void)
     ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
                       &adv_params, ble_gap_event_handler, NULL);
 
-    ESP_LOGI(TAG, "Advertising started — waiting for phone to connect...");
+    ESP_LOGD(TAG, "Advertising started");
+}
+
+/* Called by beacon_scanner.c to restart advertising after a scan window */
+void restart_advertising(void)
+{
+    if (!connected) {
+        start_advertising();
+    }
 }
 
 /* ---------- GAP event handler ---------- */
@@ -211,28 +359,6 @@ static int ble_gap_event_handler(struct ble_gap_event *event, void *arg)
     return 0;
 }
 
-/* ---------- Task: send test alert every 5 seconds ---------- */
-
-static void alert_task(void *param)
-{
-    while (1) {
-        vTaskDelay(pdMS_TO_TICKS(5000));
-
-        if (connected && notify_enabled) {
-            struct os_mbuf *om = ble_hs_mbuf_from_flat(
-                fake_beacon_alert, sizeof(fake_beacon_alert));
-
-            int rc = ble_gatts_notify_custom(conn_handle, alert_attr_handle, om);
-
-            if (rc == 0) {
-                ESP_LOGI(TAG, "Sent test beacon alert (MAC 11:22:33:44:55:66)");
-            } else {
-                ESP_LOGW(TAG, "Failed to send alert, rc=%d", rc);
-            }
-        }
-    }
-}
-
 /* ---------- NimBLE host task + sync callback ---------- */
 
 static void on_ble_sync(void)
@@ -250,8 +376,6 @@ static void on_ble_reset(int reason)
 
 static void nimble_host_task(void *param)
 {
-    /* This function runs the NimBLE host event loop. It returns only
-     * when nimble_port_stop() is called. */
     nimble_port_run();
     nimble_port_freertos_deinit();
 }
@@ -260,7 +384,7 @@ static void nimble_host_task(void *param)
 
 void app_main(void)
 {
-    ESP_LOGI(TAG, "=== Obstacle Belt BLE Test Firmware ===");
+    ESP_LOGI(TAG, "=== Obstacle Detection Belt Firmware ===");
 
     /* Initialize non-volatile storage (required by BLE stack) */
     esp_err_t ret = nvs_flash_init();
@@ -268,6 +392,12 @@ void app_main(void)
         nvs_flash_erase();
         nvs_flash_init();
     }
+
+    /* Initialize audio clip storage (SPIFFS) */
+    clip_storage_init();
+
+    /* Initialize audio player (PWM output) */
+    audio_player_init(AUDIO_GPIO);
 
     /* Initialize the NimBLE host */
     nimble_port_init();
@@ -287,8 +417,9 @@ void app_main(void)
     /* Start the NimBLE host task */
     nimble_port_freertos_init(nimble_host_task);
 
-    /* Start the test alert task — sends a fake beacon alert every 5 seconds */
-    xTaskCreate(alert_task, "alert_task", 4096, NULL, 5, NULL);
+    /* Set up beacon scanner callback and start the scan task */
+    beacon_scanner_set_alert_cb(on_beacon_detected);
+    beacon_scanner_start();
 
-    ESP_LOGI(TAG, "BLE initialized. Open the app and tap Connect.");
+    ESP_LOGI(TAG, "Belt initialized. Scanning for beacons + waiting for phone.");
 }

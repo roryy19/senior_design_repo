@@ -16,12 +16,15 @@ type AlertReceivedCb = (alert: AlertPayload) => void;
 
 // --- BLE Protocol (must match ESP32 firmware) ---
 //
-// Alert characteristic (notify):
+// Alert characteristic (notify, belt → phone):
 //   [0x01, B0, B1, B2, B3, B4, B5]  → beacon detected, MAC = B0:B1:B2:B3:B4:B5
 //   [0x02, N]                        → obstacle, N = direction index (0=front … 7=front-left)
 //
-// Config characteristic (write with response):
-//   [0x01, N]  → set arm length to N cm (uint8)
+// Config characteristic (write, phone → belt):
+//   [0x01, N]                                      → set arm length to N cm (uint8)
+//   [0x02, MAC[6], IDX_hi, IDX_lo, PCM_DATA...]    → audio clip chunk
+//   [0x03, MAC[6]]                                 → audio clip end (finalize storage)
+//   [0x04, MAC[6]]                                 → register beacon MAC for scanning
 
 class BleService {
   private manager = new BleManager();
@@ -95,12 +98,25 @@ class BleService {
     }, true);
   }
 
+  private negotiatedMtu = 23; // default BLE MTU
+
   private async connectToDevice(device: Device) {
     this.emitState('connecting');
     try {
       const connected = await device.connect({ timeout: 10000 });
       await connected.discoverAllServicesAndCharacteristics();
       this.connectedDevice = connected;
+
+      // Negotiate a larger MTU for faster audio clip transfers.
+      // Default MTU is 23 (20 usable). Request 247 for ~235 bytes per write.
+      try {
+        const mtuDevice = await connected.requestMTU(247);
+        this.negotiatedMtu = mtuDevice.mtu ?? 23;
+        console.log(`BLE MTU negotiated: ${this.negotiatedMtu}`);
+      } catch {
+        this.negotiatedMtu = 23;
+        console.warn('MTU negotiation failed, using default 23');
+      }
 
       // Watch for unexpected disconnects (e.g. belt turned off)
       this.disconnectSubscription = this.manager.onDeviceDisconnected(
@@ -126,8 +142,14 @@ class BleService {
       BELT_SERVICE_UUID,
       ALERT_CHAR_UUID,
       (error, characteristic) => {
-        if (error || !characteristic?.value) return;
+        if (error) {
+          console.warn('BLE alert subscription error:', error);
+          return;
+        }
+        if (!characteristic?.value) return;
+        console.log('BLE alert received (raw):', characteristic.value);
         const alert = this.decodeAlert(characteristic.value);
+        console.log('BLE alert decoded:', alert);
         if (alert) this.alertReceivedCb?.(alert);
       }
     );
@@ -159,6 +181,95 @@ class BleService {
     } catch (e) {
       console.warn('BLE write error:', e);
     }
+  }
+
+  // Parse a MAC string "AA:BB:CC:DD:EE:FF" into 6 bytes [0xAA, 0xBB, ...].
+  private parseMac(mac: string): number[] {
+    return mac.split(':').map((h) => parseInt(h, 16));
+  }
+
+  // Register a beacon MAC with the belt so it scans for it.
+  // MAC is in standard format: "AA:BB:CC:DD:EE:FF".
+  async registerBeacon(mac: string) {
+    if (!this.connectedDevice) return;
+    try {
+      const macBytes = this.parseMac(mac);
+      const bytes = new Uint8Array([0x04, ...macBytes]);
+      const b64 = btoa(String.fromCharCode(...bytes));
+      await this.connectedDevice.writeCharacteristicWithResponseForService(
+        BELT_SERVICE_UUID,
+        CONFIG_CHAR_UUID,
+        b64
+      );
+      console.log(`Registered beacon MAC: ${mac}`);
+    } catch (e) {
+      console.warn('BLE registerBeacon error:', e);
+    }
+  }
+
+  // Send an audio clip to the belt for storage in flash.
+  // mac: beacon MAC in "AA:BB:CC:DD:EE:FF" format.
+  // audioBase64: base64-encoded 8-bit unsigned PCM at 8kHz mono.
+  async sendAudioClip(mac: string, audioBase64: string) {
+    if (!this.connectedDevice) return;
+
+    const raw = atob(audioBase64);
+    const audioBytes = Uint8Array.from(raw, (c) => c.charCodeAt(0));
+    const macBytes = this.parseMac(mac);
+
+    // Max payload per write = negotiated MTU - 3 (ATT header)
+    // Chunk overhead: 1 (type) + 6 (MAC) + 2 (chunk index) = 9 bytes
+    const maxPayload = this.negotiatedMtu - 3;
+    const chunkDataSize = Math.max(1, maxPayload - 9);
+    const totalChunks = Math.ceil(audioBytes.length / chunkDataSize);
+
+    console.log(
+      `Sending audio clip: ${audioBytes.length} bytes, ` +
+      `${totalChunks} chunks (${chunkDataSize} bytes/chunk, MTU=${this.negotiatedMtu})`
+    );
+
+    try {
+      // Send audio data in chunks
+      for (let i = 0; i < totalChunks; i++) {
+        const offset = i * chunkDataSize;
+        const end = Math.min(offset + chunkDataSize, audioBytes.length);
+        const chunkData = audioBytes.slice(offset, end);
+
+        // Packet: [0x02, MAC[6], IDX_hi, IDX_lo, PCM_DATA...]
+        const packet = new Uint8Array(9 + chunkData.length);
+        packet[0] = 0x02;
+        packet.set(macBytes, 1);
+        packet[7] = (i >> 8) & 0xFF;
+        packet[8] = i & 0xFF;
+        packet.set(chunkData, 9);
+
+        const b64 = btoa(String.fromCharCode(...packet));
+        await this.connectedDevice!.writeCharacteristicWithResponseForService(
+          BELT_SERVICE_UUID,
+          CONFIG_CHAR_UUID,
+          b64
+        );
+      }
+
+      // Send "audio end" to finalize storage
+      const endPacket = new Uint8Array([0x03, ...macBytes]);
+      const endB64 = btoa(String.fromCharCode(...endPacket));
+      await this.connectedDevice!.writeCharacteristicWithResponseForService(
+        BELT_SERVICE_UUID,
+        CONFIG_CHAR_UUID,
+        endB64
+      );
+
+      console.log(`Audio clip sent successfully (${totalChunks} chunks)`);
+    } catch (e) {
+      console.warn('BLE sendAudioClip error:', e);
+      throw e;
+    }
+  }
+
+  // Returns true if connected to the belt.
+  isConnected(): boolean {
+    return this.connectedDevice !== null;
   }
 
   private stopScanTimeout() {

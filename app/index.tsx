@@ -9,6 +9,9 @@ import { useFontSize } from "../src/context/FontSizeContext";
 import { useBle } from "../src/context/BleContext";
 import type { BleConnectionState } from "../src/ble/BleService";
 
+// Note: BLE alert banner + TTS is now handled in _layout.tsx (visible on all screens).
+// The simulate button below still uses a local banner for testing.
+
 function bleStatusLabel(state: BleConnectionState, scanDots: string): string {
   switch (state) {
     case 'scanning':   return `Scanning${scanDots}`;
@@ -29,7 +32,7 @@ export default function HomeScreen() {
   const [debugBanner, setDebugBanner] = useState<string | null>(null);
   const bannerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { fontScale, setFontScale } = useFontSize();
-  const { connectionState, startScan, disconnect, lastAlert } = useBle();
+  const { connectionState, startScan, disconnect } = useBle();
   const [dotCount, setDotCount] = useState(1);
 
   // Animate dots while scanning: . → .. → ... → . (cycles every 500ms)
@@ -54,16 +57,6 @@ export default function HomeScreen() {
     }, [])
   );
 
-  // Show banner + speak when a real BLE alert arrives from the belt
-  useEffect(() => {
-    if (!lastAlert) return;
-    const message =
-      lastAlert.payload.type === 'beacon'
-        ? `${lastAlert.sensorName ?? 'Sensor'} ahead`
-        : `Obstacle ${lastAlert.sensorName ?? 'detected'}`;
-    showAlert(message);
-  }, [lastAlert?.id]);
-
   function showAlert(message: string) {
     if (bannerTimeoutRef.current) clearTimeout(bannerTimeoutRef.current);
     setDebugBanner(message);
@@ -73,7 +66,7 @@ export default function HomeScreen() {
 
   function simulateTrigger() {
     if (sensors.length === 0) {
-      Alert.alert("No Sensors", "Add sensors in the Sensor List first.");
+      Alert.alert("No Beacons", "Add beacons in the Beacon List first.");
       return;
     }
     const sensor = sensors[Math.floor(Math.random() * sensors.length)];
@@ -153,7 +146,7 @@ export default function HomeScreen() {
 
         <Link href="/sensor_list" asChild>
           <Pressable style={{ padding: 12, borderWidth: 1, borderRadius: 10 }}>
-            <Text style={{ fontSize: 16 * fontScale }}>Go to your Sensor List</Text>
+            <Text style={{ fontSize: 16 * fontScale }}>Go to your Beacon List</Text>
           </Pressable>
         </Link>
 
