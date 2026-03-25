@@ -47,3 +47,8 @@ firmware/esp/sdkconfig
 # Claude
 CLAUDE.md
 .claude/
+
+#.md
+BEACON_AND_TTS.md
+presentation_skeleton.md
+TECHNICAL_REFERENCE.md
