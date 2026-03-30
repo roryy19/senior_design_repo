@@ -29,8 +29,9 @@
 #define BEACON_NAME "OB_STAIRS"
 
 // Advertising interval in units of 0.625ms.
-// 1600 = 1000ms (1 second) — good balance of discoverability vs battery life.
-#define ADV_INTERVAL 1600
+// 320 = 200ms — fast updates for near-real-time RSSI tracking.
+// Uses more power, but beacons are wall-powered so this is fine.
+#define ADV_INTERVAL 320
 
 void setup()
 {

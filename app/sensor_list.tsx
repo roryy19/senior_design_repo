@@ -19,7 +19,7 @@ export default function SensorListScreen() {
   // setSensors: function to replace sensors with this new value then re-render screen
   const [sensors, setSensors] = useState<PlacedSensor[]>([]);
   const { fontScale } = useFontSize();
-  const { sendAudioToBeacon, registerBeacon, lastAlert } = useBle();
+  const { sendAudioToBeacon, registerBeacon, lastAlert, beaconRssi } = useBle();
   const [isSending, setIsSending] = useState(false);
   const pendingMacRef = useRef<string | null>(null);
   const detectionTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -182,6 +182,17 @@ export default function SensorListScreen() {
         <Text style={{ fontSize: 18 * fontScale, fontWeight: "600" }}>{item.name}</Text>
         {item.macAddress && (
           <Text style={{ fontSize: 13 * fontScale, color: '#666', marginTop: 2 }}>{item.macAddress}</Text>
+        )}
+        {item.macAddress && (
+          <Text style={{
+            fontSize: 13 * fontScale,
+            color: beaconRssi[item.macAddress.toUpperCase()] !== undefined ? '#007AFF' : '#999',
+            marginTop: 2,
+          }}>
+            {beaconRssi[item.macAddress.toUpperCase()] !== undefined
+              ? `Signal: ${beaconRssi[item.macAddress.toUpperCase()]} dBm`
+              : 'No signal'}
+          </Text>
         )}
 
         <View

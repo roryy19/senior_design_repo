@@ -19,6 +19,7 @@ type BleContextType = {
   sendAudioToBeacon: (mac: string, audioBase64: string) => Promise<void>;
   registerBeacon: (mac: string) => Promise<void>;
   lastAlert: BleAlert | null;
+  beaconRssi: Record<string, number>;
 };
 
 const BleContext = createContext<BleContextType | null>(null);
@@ -47,6 +48,7 @@ Notifications.setNotificationHandler({
 export function BleProvider({ children }: { children: React.ReactNode }) {
   const [connectionState, setConnectionState] = useState<BleConnectionState>('disconnected');
   const [lastAlert, setLastAlert] = useState<BleAlert | null>(null);
+  const [beaconRssi, setBeaconRssi] = useState<Record<string, number>>({});
   const alertIdRef = useRef(0);
 
   useEffect(() => {
@@ -74,6 +76,12 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
     });
 
     bleService.onAlertReceived((payload) => {
+      // RSSI updates just refresh the signal map — no banner, no notification.
+      if (payload.type === 'rssi_update') {
+        setBeaconRssi((prev) => ({ ...prev, [payload.mac]: payload.rssi }));
+        return;
+      }
+
       (async () => {
         let sensorName: string | undefined;
 
@@ -140,6 +148,7 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
       sendAudioToBeacon,
       registerBeacon,
       lastAlert,
+      beaconRssi,
     }}>
       {children}
     </BleContext.Provider>

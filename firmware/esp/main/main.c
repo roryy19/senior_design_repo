@@ -104,6 +104,27 @@ static void send_beacon_alert(const uint8_t *mac_le)
     }
 }
 
+/* ---------- Send RSSI update to phone ---------- */
+
+void send_rssi_update(const uint8_t *mac_le, int8_t rssi)
+{
+    if (!connected || !notify_enabled) return;
+
+    /* Build RSSI update packet: [0x03, MAC_BE[6], RSSI_offset] */
+    uint8_t pkt[8];
+    pkt[0] = 0x03;           /* type = RSSI update */
+    pkt[1] = mac_le[5];     /* Reverse NimBLE LE → phone's expected BE */
+    pkt[2] = mac_le[4];
+    pkt[3] = mac_le[3];
+    pkt[4] = mac_le[2];
+    pkt[5] = mac_le[1];
+    pkt[6] = mac_le[0];
+    pkt[7] = (uint8_t)((int16_t)rssi + 128);  /* Offset encoding: -127→1, 0→128 */
+
+    struct os_mbuf *om = ble_hs_mbuf_from_flat(pkt, sizeof(pkt));
+    ble_gatts_notify_custom(conn_handle, alert_attr_handle, om);
+}
+
 /* ---------- Beacon proximity callback ---------- */
 
 /* Called by beacon_scanner when a known beacon enters proximity.

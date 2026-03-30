@@ -7,7 +7,8 @@ import { BELT_SERVICE_UUID, ALERT_CHAR_UUID, CONFIG_CHAR_UUID } from './uuids';
 // The app looks up the beacon's name from the sensor list by MAC address.
 export type AlertPayload =
   | { type: 'beacon'; mac: string }
-  | { type: 'obstacle'; directionIndex: number };
+  | { type: 'obstacle'; directionIndex: number }
+  | { type: 'rssi_update'; mac: string; rssi: number };
 
 export type BleConnectionState = 'disconnected' | 'scanning' | 'connecting' | 'connected';
 
@@ -19,6 +20,7 @@ type AlertReceivedCb = (alert: AlertPayload) => void;
 // Alert characteristic (notify, belt → phone):
 //   [0x01, B0, B1, B2, B3, B4, B5]  → beacon detected, MAC = B0:B1:B2:B3:B4:B5
 //   [0x02, N]                        → obstacle, N = direction index (0=front … 7=front-left)
+//   [0x03, B0..B5, RSSI_offset]      → RSSI update, RSSI = RSSI_offset - 128
 //
 // Config characteristic (write, phone → belt):
 //   [0x01, N]                                      → set arm length to N cm (uint8)
@@ -303,6 +305,14 @@ class BleService {
 
       if (bytes[0] === 0x02 && bytes.length >= 2) {
         return { type: 'obstacle', directionIndex: bytes[1] };
+      }
+
+      if (bytes[0] === 0x03 && bytes.length >= 8) {
+        const mac = Array.from(bytes.slice(1, 7))
+          .map((b) => b.toString(16).padStart(2, '0').toUpperCase())
+          .join(':');
+        const rssi = bytes[7] - 128;
+        return { type: 'rssi_update', mac, rssi };
       }
 
       return null;

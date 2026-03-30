@@ -15,8 +15,9 @@
 #include "esp_timer.h"
 #include "host/ble_hs.h"
 
-/* Defined in main.c — we call this to restart advertising after a scan window */
+/* Defined in main.c — we call these from the scan task/callback */
 extern void restart_advertising(void);
+extern void send_rssi_update(const uint8_t *mac_le, int8_t rssi);
 
 static const char *TAG = "BEACON_SCAN";
 
@@ -40,7 +41,10 @@ int beacon_scanner_add_beacon(const uint8_t *mac_le)
     /* Check if already in the list */
     for (int i = 0; i < num_known_beacons; i++) {
         if (memcmp(known_beacons[i].mac, mac_le, BEACON_MAC_LEN) == 0) {
-            return i; /* Already known */
+            ESP_LOGI(TAG, "Beacon %d already registered: MAC=%02X:%02X:%02X:%02X:%02X:%02X",
+                     i, mac_le[5], mac_le[4], mac_le[3],
+                     mac_le[2], mac_le[1], mac_le[0]);
+            return i;
         }
     }
 
@@ -109,10 +113,12 @@ static int scan_gap_event_handler(struct ble_gap_event *event, void *arg)
         rssi_add_reading(i, desc->rssi);
         int8_t avg = rssi_get_average(i);
 
-        ESP_LOGD(TAG, "Beacon %d: RSSI=%d, avg=%d", i, desc->rssi, avg);
-
         int64_t now_ms = esp_timer_get_time() / 1000;
         beacon_state_t *bs = &beacon_states[i];
+        bs->last_seen_time_ms = now_ms;
+
+        /* Send RSSI update to phone */
+        send_rssi_update(known_beacons[i].mac, avg);
 
         if (avg > RSSI_THRESHOLD) {
             if (!bs->currently_near &&
@@ -127,7 +133,9 @@ static int scan_gap_event_handler(struct ble_gap_event *event, void *arg)
                     alert_cb(known_beacons[i].mac, i);
                 }
             }
-        } else {
+        } else if (avg < RSSI_LEAVE_THRESHOLD) {
+            /* Hysteresis: must drop 5 dBm below entry threshold to "leave".
+             * Prevents alert spam when user is right at the boundary. */
             if (bs->currently_near) {
                 ESP_LOGI(TAG, "Beacon %d left proximity (avg RSSI=%d)", i, avg);
             }
@@ -138,6 +146,25 @@ static int scan_gap_event_handler(struct ble_gap_event *event, void *arg)
     }
 
     return 0;
+}
+
+/* ---------- Timeout check ---------- */
+
+static void check_beacon_timeouts(void)
+{
+    int64_t now_ms = esp_timer_get_time() / 1000;
+
+    for (int i = 0; i < num_known_beacons; i++) {
+        beacon_state_t *bs = &beacon_states[i];
+
+        if (bs->currently_near && bs->last_seen_time_ms > 0 &&
+            (now_ms - bs->last_seen_time_ms > BEACON_GONE_TIMEOUT_MS)) {
+            bs->currently_near = false;
+            bs->rssi_count = 0;
+            bs->rssi_idx = 0;
+            ESP_LOGI(TAG, "Beacon %d left proximity (timeout — no signal)", i);
+        }
+    }
 }
 
 /* ---------- Scan task ---------- */
@@ -160,7 +187,7 @@ static void beacon_scan_task(void *param)
         if (ble_hs_synced()) {
             int rc = ble_gap_disc(
                 BLE_OWN_ADDR_PUBLIC,
-                4000,                    /* Duration: 4000ms */
+                1500,                    /* Duration: 1500ms */
                 &scan_params,
                 scan_gap_event_handler,
                 NULL
@@ -175,7 +202,7 @@ static void beacon_scan_task(void *param)
                  * Stop advertising, scan, then restart. */
                 ble_gap_adv_stop();
                 rc = ble_gap_disc(
-                    BLE_OWN_ADDR_PUBLIC, 4000,
+                    BLE_OWN_ADDR_PUBLIC, 1500,
                     &scan_params, scan_gap_event_handler, NULL);
                 if (rc != 0) {
                     ESP_LOGW(TAG, "Scan failed after adv stop, rc=%d", rc);
@@ -185,13 +212,14 @@ static void beacon_scan_task(void *param)
             }
         }
 
-        /* Wait for the 4s scan to complete, then restart advertising */
-        vTaskDelay(pdMS_TO_TICKS(4500));
+        /* Wait for the 1.5s scan to complete, then restart advertising */
+        vTaskDelay(pdMS_TO_TICKS(1700));
         ble_gap_disc_cancel();
+        check_beacon_timeouts();
         restart_advertising();
 
-        /* Pause before next scan cycle */
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        /* Brief pause before next scan cycle */
+        vTaskDelay(pdMS_TO_TICKS(300));
     }
 }
 
