@@ -155,6 +155,7 @@ static void on_beacon_detected(const uint8_t *mac_le, int beacon_index)
  *   0x02: Audio chunk      [0x02, MAC[6], IDX_hi, IDX_lo, PCM_DATA...]
  *   0x03: Audio end        [0x03, MAC[6]]
  *   0x04: Register beacon  [0x04, MAC[6]]
+ *   0x05: Delete beacon    [0x05, MAC[6]]
  */
 static int config_write_cb(uint16_t conn_handle_arg, uint16_t attr_handle,
                            struct ble_gatt_access_ctxt *ctxt, void *arg)
@@ -185,16 +186,15 @@ static int config_write_cb(uint16_t conn_handle_arg, uint16_t attr_handle,
             uint8_t *pcm_data = &buf[9];
             size_t pcm_len = len - 9;
 
-            /* If this is a new transfer (first chunk or different MAC), reset buffer */
+            /* If this is a new transfer (first chunk or different MAC), reset buffer.
+             * Compare in big-endian since that's what arrives from the phone. */
+            uint8_t mac_le[BEACON_MAC_LEN];
+            mac_le[0] = mac[5]; mac_le[1] = mac[4]; mac_le[2] = mac[3];
+            mac_le[3] = mac[2]; mac_le[4] = mac[1]; mac_le[5] = mac[0];
+
             if (!audio_recv_active ||
-                memcmp(audio_recv_mac, mac, BEACON_MAC_LEN) != 0) {
-                /* MAC from phone is big-endian, convert to little-endian for storage */
-                audio_recv_mac[0] = mac[5];
-                audio_recv_mac[1] = mac[4];
-                audio_recv_mac[2] = mac[3];
-                audio_recv_mac[3] = mac[2];
-                audio_recv_mac[4] = mac[1];
-                audio_recv_mac[5] = mac[0];
+                memcmp(audio_recv_mac, mac_le, BEACON_MAC_LEN) != 0) {
+                memcpy(audio_recv_mac, mac_le, BEACON_MAC_LEN);
                 audio_recv_len = 0;
                 audio_recv_active = true;
                 ESP_LOGI(TAG, "Starting audio receive for MAC=%02X:%02X:%02X:%02X:%02X:%02X",
@@ -239,6 +239,20 @@ static int config_write_cb(uint16_t conn_handle_arg, uint16_t attr_handle,
             mac_le[4] = buf[2];
             mac_le[5] = buf[1];
             beacon_scanner_add_beacon(mac_le);
+        }
+        break;
+
+    case 0x05: /* Delete beacon (remove from scan list + delete audio clip) */
+        if (len >= 7) {
+            uint8_t mac_le[BEACON_MAC_LEN];
+            mac_le[0] = buf[6];
+            mac_le[1] = buf[5];
+            mac_le[2] = buf[4];
+            mac_le[3] = buf[3];
+            mac_le[4] = buf[2];
+            mac_le[5] = buf[1];
+            beacon_scanner_remove_beacon(mac_le);
+            clip_storage_delete(mac_le);
         }
         break;
 

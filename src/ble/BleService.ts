@@ -27,6 +27,7 @@ type AlertReceivedCb = (alert: AlertPayload) => void;
 //   [0x02, MAC[6], IDX_hi, IDX_lo, PCM_DATA...]    → audio clip chunk
 //   [0x03, MAC[6]]                                 → audio clip end (finalize storage)
 //   [0x04, MAC[6]]                                 → register beacon MAC for scanning
+//   [0x05, MAC[6]]                                 → delete beacon (remove + delete clip)
 
 class BleService {
   private manager = new BleManager();
@@ -206,6 +207,24 @@ class BleService {
       console.log(`Registered beacon MAC: ${mac}`);
     } catch (e) {
       console.warn('BLE registerBeacon error:', e);
+    }
+  }
+
+  // Delete a beacon from the belt (removes from scan list + deletes audio clip).
+  async deleteBeacon(mac: string) {
+    if (!this.connectedDevice) return;
+    try {
+      const macBytes = this.parseMac(mac);
+      const bytes = new Uint8Array([0x05, ...macBytes]);
+      const b64 = btoa(String.fromCharCode(...bytes));
+      await this.connectedDevice.writeCharacteristicWithResponseForService(
+        BELT_SERVICE_UUID,
+        CONFIG_CHAR_UUID,
+        b64
+      );
+      console.log(`Deleted beacon MAC: ${mac}`);
+    } catch (e) {
+      console.warn('BLE deleteBeacon error:', e);
     }
   }
 

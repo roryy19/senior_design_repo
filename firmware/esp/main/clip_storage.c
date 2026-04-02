@@ -101,3 +101,17 @@ bool clip_storage_exists(const uint8_t mac[6])
     struct stat st;
     return (stat(path, &st) == 0);
 }
+
+bool clip_storage_delete(const uint8_t mac[6])
+{
+    char path[64];
+    mac_to_path(mac, path, sizeof(path));
+
+    if (remove(path) == 0) {
+        ESP_LOGI(TAG, "Deleted clip: %s", path);
+        return true;
+    }
+
+    ESP_LOGD(TAG, "Clip not found for delete: %s", path);
+    return false;
+}

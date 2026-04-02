@@ -2,6 +2,11 @@ import { NativeModules, Platform } from 'react-native';
 
 const { TtsSynthesizer } = NativeModules;
 
+// Debug: log whether the native module was found at startup
+console.log('[TTS] Native module available:', !!TtsSynthesizer);
+console.log('[TTS] Platform:', Platform.OS);
+console.log('[TTS] All native modules:', Object.keys(NativeModules).filter(k => k.toLowerCase().includes('tts')));
+
 /**
  * Generate TTS audio for the given text using the iOS native module.
  *

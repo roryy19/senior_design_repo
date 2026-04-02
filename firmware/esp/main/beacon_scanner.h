@@ -17,8 +17,8 @@ extern "C" {
 #define BEACON_MAC_LEN       6
 #define MAX_KNOWN_BEACONS    8
 #define RSSI_WINDOW_SIZE     5
-#define RSSI_THRESHOLD       (-70)   /* Alert when smoothed RSSI > this (closer = higher) */
-#define RSSI_LEAVE_THRESHOLD (-75)   /* Must drop below this to re-arm (hysteresis) */
+#define RSSI_THRESHOLD       (-75)   /* Alert when smoothed RSSI > this (closer = higher) */
+#define RSSI_LEAVE_THRESHOLD (-80)   /* Must drop below this to re-arm (hysteresis) */
 #define BEACON_COOLDOWN_MS   1000    /* Don't re-alert same beacon for 1 second */
 #define BEACON_GONE_TIMEOUT_MS 2000  /* Mark beacon as "left" if not seen for 2s */
 
@@ -53,6 +53,13 @@ void beacon_scanner_set_alert_cb(beacon_alert_cb_t cb);
  * Returns the beacon index, or -1 if the list is full.
  */
 int beacon_scanner_add_beacon(const uint8_t *mac_le);
+
+/*
+ * Remove a beacon MAC from the known list.
+ * mac_le: 6-byte MAC in little-endian (NimBLE byte order).
+ * Returns true if removed, false if not found.
+ */
+bool beacon_scanner_remove_beacon(const uint8_t *mac_le);
 
 /* Get the current number of known beacons */
 int beacon_scanner_get_count(void);

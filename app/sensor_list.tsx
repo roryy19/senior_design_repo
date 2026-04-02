@@ -19,7 +19,7 @@ export default function SensorListScreen() {
   // setSensors: function to replace sensors with this new value then re-render screen
   const [sensors, setSensors] = useState<PlacedSensor[]>([]);
   const { fontScale } = useFontSize();
-  const { sendAudioToBeacon, registerBeacon, lastAlert, beaconRssi } = useBle();
+  const { sendAudioToBeacon, registerBeacon, deleteBeacon, lastAlert, beaconRssi } = useBle();
   const [isSending, setIsSending] = useState(false);
   const pendingMacRef = useRef<string | null>(null);
   const detectionTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -65,7 +65,9 @@ export default function SensorListScreen() {
     setIsSending(true);
     try {
       const ttsText = `${name} ahead`;
+      console.log('[TTS] Generating audio for:', ttsText);
       const audioBase64 = await generateSpeechAudio(ttsText);
+      console.log('[TTS] Audio result:', audioBase64 ? `${audioBase64.length} chars` : 'null');
       if (audioBase64) {
         await sendAudioToBeacon(mac, audioBase64);
       }
@@ -160,6 +162,9 @@ export default function SensorListScreen() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
+            if (sensor.macAddress) {
+              deleteBeacon(sensor.macAddress);
+            }
             const next = await removeSensor(sensor.id);
             setSensors(next);
           },

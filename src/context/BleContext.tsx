@@ -18,6 +18,7 @@ type BleContextType = {
   sendArmLength: (cm: number) => void;
   sendAudioToBeacon: (mac: string, audioBase64: string) => Promise<void>;
   registerBeacon: (mac: string) => Promise<void>;
+  deleteBeacon: (mac: string) => Promise<void>;
   lastAlert: BleAlert | null;
   beaconRssi: Record<string, number>;
 };
@@ -139,6 +140,14 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
     await bleService.registerBeacon(mac);
   }
 
+  async function deleteBeacon(mac: string) {
+    if (!bleService.isConnected()) {
+      console.log('Belt not connected — skipping beacon delete for', mac);
+      return;
+    }
+    await bleService.deleteBeacon(mac);
+  }
+
   return (
     <BleContext.Provider value={{
       connectionState,
@@ -147,6 +156,7 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
       sendArmLength: (cm) => bleService.sendArmLength(cm),
       sendAudioToBeacon,
       registerBeacon,
+      deleteBeacon,
       lastAlert,
       beaconRssi,
     }}>

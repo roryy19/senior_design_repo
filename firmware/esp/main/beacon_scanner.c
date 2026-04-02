@@ -67,6 +67,27 @@ int beacon_scanner_add_beacon(const uint8_t *mac_le)
     return idx;
 }
 
+bool beacon_scanner_remove_beacon(const uint8_t *mac_le)
+{
+    for (int i = 0; i < num_known_beacons; i++) {
+        if (memcmp(known_beacons[i].mac, mac_le, BEACON_MAC_LEN) == 0) {
+            ESP_LOGI(TAG, "Removed beacon %d: MAC=%02X:%02X:%02X:%02X:%02X:%02X",
+                     i, mac_le[5], mac_le[4], mac_le[3],
+                     mac_le[2], mac_le[1], mac_le[0]);
+
+            /* Shift remaining beacons down to fill the gap */
+            for (int j = i; j < num_known_beacons - 1; j++) {
+                known_beacons[j] = known_beacons[j + 1];
+                beacon_states[j] = beacon_states[j + 1];
+            }
+            num_known_beacons--;
+            memset(&beacon_states[num_known_beacons], 0, sizeof(beacon_state_t));
+            return true;
+        }
+    }
+    return false;
+}
+
 int beacon_scanner_get_count(void)
 {
     return num_known_beacons;

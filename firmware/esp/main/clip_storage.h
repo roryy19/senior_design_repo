@@ -43,6 +43,9 @@ size_t clip_storage_read(const uint8_t mac[6], uint8_t *buf, size_t max_len);
 /* Check if a clip exists for the given MAC. */
 bool clip_storage_exists(const uint8_t mac[6]);
 
+/* Delete a clip for the given MAC. Returns true if deleted, false if not found. */
+bool clip_storage_delete(const uint8_t mac[6]);
+
 #ifdef __cplusplus
 }
 #endif
