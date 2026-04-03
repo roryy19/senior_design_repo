@@ -16,7 +16,11 @@ type BleContextType = {
   startScan: () => void;
   disconnect: () => void;
   sendArmLength: (cm: number) => void;
+  sendAudioToBeacon: (mac: string, audioBase64: string) => Promise<void>;
+  registerBeacon: (mac: string) => Promise<void>;
+  deleteBeacon: (mac: string) => Promise<void>;
   lastAlert: BleAlert | null;
+  beaconRssi: Record<string, number>;
 };
 
 const BleContext = createContext<BleContextType | null>(null);
@@ -45,6 +49,7 @@ Notifications.setNotificationHandler({
 export function BleProvider({ children }: { children: React.ReactNode }) {
   const [connectionState, setConnectionState] = useState<BleConnectionState>('disconnected');
   const [lastAlert, setLastAlert] = useState<BleAlert | null>(null);
+  const [beaconRssi, setBeaconRssi] = useState<Record<string, number>>({});
   const alertIdRef = useRef(0);
 
   useEffect(() => {
@@ -55,22 +60,36 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
       setConnectionState(state);
       if (state === 'connected') {
         (async () => {
+          // Send arm length
           const dims = await loadUserDimensions();
           if (dims?.shoulderToFingertipCm) {
             bleService.sendArmLength(dims.shoulderToFingertipCm);
+          }
+          // Register all saved sensor MACs with the belt
+          const sensors = await loadSensors();
+          for (const s of sensors) {
+            if (s.macAddress) {
+              await bleService.registerBeacon(s.macAddress);
+            }
           }
         })();
       }
     });
 
     bleService.onAlertReceived((payload) => {
+      // RSSI updates just refresh the signal map — no banner, no notification.
+      if (payload.type === 'rssi_update') {
+        setBeaconRssi((prev) => ({ ...prev, [payload.mac]: payload.rssi }));
+        return;
+      }
+
       (async () => {
         let sensorName: string | undefined;
 
         if (payload.type === 'beacon') {
           // Look up the beacon's display name by MAC address from the sensor list.
           const sensors = await loadSensors();
-          const matched = sensors.find((s) => s.macAddress === payload.mac);
+          const matched = sensors.find((s) => s.macAddress?.toUpperCase() === payload.mac?.toUpperCase());
           sensorName = matched?.name;
         } else {
           // Map obstacle direction index → human-readable label.
@@ -90,6 +109,7 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
           trigger: null, // null = fire immediately
         });
 
+        console.log('Alert processed — setting lastAlert:', message);
         alertIdRef.current += 1;
         setLastAlert({ payload, sensorName, id: alertIdRef.current });
       })();
@@ -100,13 +120,45 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Send a TTS audio clip to the belt for a specific beacon MAC.
+  // If not connected, the clip is silently skipped (caller should check connection state).
+  async function sendAudioToBeacon(mac: string, audioBase64: string) {
+    if (!bleService.isConnected()) {
+      console.log('Belt not connected — skipping audio send for', mac);
+      return;
+    }
+    await bleService.sendAudioClip(mac, audioBase64);
+  }
+
+  // Register a beacon MAC with the belt so it starts scanning for it.
+  // Works without the TTS native module — just tells the belt "watch for this MAC".
+  async function registerBeacon(mac: string) {
+    if (!bleService.isConnected()) {
+      console.log('Belt not connected — skipping beacon registration for', mac);
+      return;
+    }
+    await bleService.registerBeacon(mac);
+  }
+
+  async function deleteBeacon(mac: string) {
+    if (!bleService.isConnected()) {
+      console.log('Belt not connected — skipping beacon delete for', mac);
+      return;
+    }
+    await bleService.deleteBeacon(mac);
+  }
+
   return (
     <BleContext.Provider value={{
       connectionState,
       startScan: () => bleService.startScan(),
       disconnect: () => bleService.disconnect(),
       sendArmLength: (cm) => bleService.sendArmLength(cm),
+      sendAudioToBeacon,
+      registerBeacon,
+      deleteBeacon,
       lastAlert,
+      beaconRssi,
     }}>
       {children}
     </BleContext.Provider>

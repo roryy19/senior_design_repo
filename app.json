@@ -48,7 +48,8 @@
           ],
           "bluetoothAlwaysPermission": "Allow Obstacle Belt to use Bluetooth to connect to the detection belt and receive obstacle alerts."
         }
-      ]
+      ],
+      "./plugins/withTtsSynthesizer"
     ],
     "extra": {
       "router": {},

@@ -1,10 +1,12 @@
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, Text, FlatList, Pressable, Modal, TextInput, Alert } from "react-native";
 import { Stack } from "expo-router";
 
 import type { PlacedSensor } from "../src/domain/types";
 import { loadSensors, saveSensors, updateSensor, removeSensor } from "../src/storage/registry";
 import { useFontSize } from "../src/context/FontSizeContext";
+import { useBle } from "../src/context/BleContext";
+import { generateSpeechAudio } from "../src/native/TtsSynthesizer";
 
 // ID generator for sensors
 function makeId(): string {
@@ -17,6 +19,10 @@ export default function SensorListScreen() {
   // setSensors: function to replace sensors with this new value then re-render screen
   const [sensors, setSensors] = useState<PlacedSensor[]>([]);
   const { fontScale } = useFontSize();
+  const { sendAudioToBeacon, registerBeacon, deleteBeacon, lastAlert, beaconRssi } = useBle();
+  const [isSending, setIsSending] = useState(false);
+  const pendingMacRef = useRef<string | null>(null);
+  const detectionTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // UI state for "Add Sensor" modal
   const [addOpen, setAddOpen] = useState(false);
@@ -35,6 +41,17 @@ export default function SensorListScreen() {
     })();
   }, []);
 
+  // If we're waiting for a beacon detection, cancel the timer if the alert matches
+  useEffect(() => {
+    if (!lastAlert || !pendingMacRef.current) return;
+    if (lastAlert.payload.type === 'beacon' &&
+        lastAlert.payload.mac?.toUpperCase() === pendingMacRef.current.toUpperCase()) {
+      // Beacon was detected — clear the pending timer
+      if (detectionTimerRef.current) clearTimeout(detectionTimerRef.current);
+      pendingMacRef.current = null;
+    }
+  }, [lastAlert?.id]);
+
   // Open add modal
   function openAdd() {
     setNewName("");
@@ -42,21 +59,65 @@ export default function SensorListScreen() {
     setAddOpen(true);
   }
 
-  // Add a sensor (update state + persist)
+  // Generate TTS audio and send it to the belt for a sensor with a MAC address.
+  async function sendAudioForSensor(name: string, mac: string | undefined) {
+    if (!mac) return;
+    setIsSending(true);
+    try {
+      const ttsText = `${name} ahead`;
+      console.log('[TTS] Generating audio for:', ttsText);
+      const audioBase64 = await generateSpeechAudio(ttsText);
+      console.log('[TTS] Audio result:', audioBase64 ? `${audioBase64.length} chars` : 'null');
+      if (audioBase64) {
+        await sendAudioToBeacon(mac, audioBase64);
+      }
+    } catch (e) {
+      console.warn('Failed to send audio to belt:', e);
+    } finally {
+      setIsSending(false);
+    }
+  }
+
+  // Add a sensor (update state + persist + send audio to belt)
   async function confirmAdd() {
     const name = newName.trim();
     if (!name) return;
 
+    const mac = newMac.trim() || undefined;
     const newSensor: PlacedSensor = {
       id: makeId(),
       name,
-      macAddress: newMac.trim() || undefined,
+      macAddress: mac,
     };
 
     const next = [newSensor, ...sensors];
     setSensors(next);
     await saveSensors(next);
     setAddOpen(false);
+
+    // Register beacon MAC with belt and start detection timer
+    if (mac) {
+      registerBeacon(mac);
+      startDetectionTimer(mac);
+    }
+
+    // Generate TTS and send audio clip to the belt (runs in background)
+    sendAudioForSensor(name, mac);
+  }
+
+  // Start a 15-second timer to warn if a beacon MAC is not detected
+  function startDetectionTimer(mac: string) {
+    if (detectionTimerRef.current) clearTimeout(detectionTimerRef.current);
+    pendingMacRef.current = mac;
+    detectionTimerRef.current = setTimeout(() => {
+      if (pendingMacRef.current === mac) {
+        Alert.alert(
+          "Beacon Not Found",
+          "This beacon was not detected nearby. Check that the MAC address is correct and the beacon is powered on."
+        );
+        pendingMacRef.current = null;
+      }
+    }, 15000);
   }
 
   // Open edit modal
@@ -72,19 +133,28 @@ export default function SensorListScreen() {
     const name = newName.trim();
     if (!name || !editingSensor) return;
 
-    // create new sensor with all fields the same except name and macAddress
-    const updated: PlacedSensor = { ...editingSensor, name, macAddress: newMac.trim() || undefined };
-    
+    const mac = newMac.trim() || undefined;
+    const updated: PlacedSensor = { ...editingSensor, name, macAddress: mac };
+
     const next = await updateSensor(updated);
     setSensors(next);
-    
+
     setEditOpen(false);
     setEditingSensor(null);
+
+    // Register beacon MAC with belt and start detection timer
+    if (mac) {
+      registerBeacon(mac);
+      startDetectionTimer(mac);
+    }
+
+    // Re-generate TTS and send updated audio clip to the belt
+    sendAudioForSensor(name, mac);
   }
 
   function confirmDelete(sensor: PlacedSensor) {
     Alert.alert(
-      "Delete sensor?",
+      "Delete beacon?",
       `Are you sure you want to delete "${sensor.name}"?`,
       [
         {text : "Cancel", style: "cancel"},
@@ -92,6 +162,9 @@ export default function SensorListScreen() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
+            if (sensor.macAddress) {
+              deleteBeacon(sensor.macAddress);
+            }
             const next = await removeSensor(sensor.id);
             setSensors(next);
           },
@@ -114,6 +187,17 @@ export default function SensorListScreen() {
         <Text style={{ fontSize: 18 * fontScale, fontWeight: "600" }}>{item.name}</Text>
         {item.macAddress && (
           <Text style={{ fontSize: 13 * fontScale, color: '#666', marginTop: 2 }}>{item.macAddress}</Text>
+        )}
+        {item.macAddress && (
+          <Text style={{
+            fontSize: 13 * fontScale,
+            color: beaconRssi[item.macAddress.toUpperCase()] !== undefined ? '#007AFF' : '#999',
+            marginTop: 2,
+          }}>
+            {beaconRssi[item.macAddress.toUpperCase()] !== undefined
+              ? `Signal: ${beaconRssi[item.macAddress.toUpperCase()]} dBm`
+              : 'No signal'}
+          </Text>
         )}
 
         <View
@@ -157,7 +241,7 @@ export default function SensorListScreen() {
       {/* This configures the top header for this screen */}
       <Stack.Screen
         options={{
-          title: "Sensors",
+          title: "Beacons",
           headerRight: () => (
             <Pressable onPress={openAdd} style={{ paddingHorizontal: 12, paddingVertical: 6 }}>
               <Text style={{ fontSize: 16 * fontScale }}>Add</Text>
@@ -165,6 +249,15 @@ export default function SensorListScreen() {
           ),
         }}
       />
+
+      {/* Audio transfer status banner */}
+      {isSending && (
+        <View style={{ backgroundColor: '#007AFF', paddingVertical: 8, paddingHorizontal: 16 }}>
+          <Text style={{ color: 'white', fontSize: 14 * fontScale, textAlign: 'center' }}>
+            Sending audio to belt...
+          </Text>
+        </View>
+      )}
 
       {/* The vertical list */}
       <FlatList
@@ -174,7 +267,7 @@ export default function SensorListScreen() {
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
         ListEmptyComponent={() => (
           <Text style={{ opacity: 0.6, fontSize: 16 * fontScale }}>
-            No sensors yet. Tap "Add" to create one.
+            No beacons yet. Tap "Add" to create one.
           </Text>
         )}
         renderItem={renderItem}
@@ -198,7 +291,7 @@ export default function SensorListScreen() {
               gap: 12,
             }}
           >
-            <Text style={{ fontSize: 20 * fontScale, fontWeight: "700" }}>Add sensor</Text>
+            <Text style={{ fontSize: 20 * fontScale, fontWeight: "700" }}>Add beacon</Text>
 
             <TextInput
               value={newName}
@@ -281,7 +374,7 @@ export default function SensorListScreen() {
               gap: 12,
             }}
           >
-            <Text style={{ fontSize: 20 * fontScale, fontWeight: "700" }}>Edit sensor</Text>
+            <Text style={{ fontSize: 20 * fontScale, fontWeight: "700" }}>Edit beacon</Text>
 
             <TextInput
               value={newName}
