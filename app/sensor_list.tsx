@@ -19,8 +19,22 @@ export default function SensorListScreen() {
   // setSensors: function to replace sensors with this new value then re-render screen
   const [sensors, setSensors] = useState<PlacedSensor[]>([]);
   const { fontScale } = useFontSize();
-  const { sendAudioToBeacon, registerBeacon, deleteBeacon, lastAlert, beaconRssi } = useBle();
+  const { sendAudioToBeacon, registerBeacon, deleteBeacon, sendRssiThreshold, lastAlert, beaconRssi } = useBle();
   const [isSending, setIsSending] = useState(false);
+  const [threshold, setThreshold] = useState('-75');
+  const [savedThreshold, setSavedThreshold] = useState(-75);
+  const leaveThreshold = (parseInt(threshold) || -75) - 5;
+  const DEFAULT_THRESHOLD = -75;
+
+  function applyThreshold() {
+    let val = parseInt(threshold);
+    if (isNaN(val)) val = DEFAULT_THRESHOLD;
+    if (val > -55) val = -55;
+    if (val < -85) val = -85;
+    setThreshold(String(val));
+    setSavedThreshold(val);
+    sendRssiThreshold(val);
+  }
   const pendingMacRef = useRef<string | null>(null);
   const detectionTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -186,7 +200,7 @@ export default function SensorListScreen() {
       >
         <Text style={{ fontSize: 18 * fontScale, fontWeight: "600" }}>{item.name}</Text>
         {item.macAddress && (
-          <Text style={{ fontSize: 13 * fontScale, color: '#666', marginTop: 2 }}>{item.macAddress}</Text>
+          <Text style={{ fontSize: 13 * fontScale, color: '#000', marginTop: 2 }}>{item.macAddress}</Text>
         )}
         {item.macAddress && (
           <Text style={{
@@ -249,6 +263,69 @@ export default function SensorListScreen() {
           ),
         }}
       />
+
+      {/* Detection threshold control */}
+      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 }}>
+        <Text style={{ fontSize: 16 * fontScale, fontWeight: "600", marginBottom: 6 }}>
+          Detection Threshold
+        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <TextInput
+            value={threshold}
+            onChangeText={setThreshold}
+            keyboardType="numbers-and-punctuation"
+            style={{
+              borderWidth: 1,
+              borderColor: parseInt(threshold) !== savedThreshold ? '#007AFF' : '#ddd',
+              borderRadius: 10,
+              padding: 10,
+              fontSize: 16 * fontScale,
+              width: 80,
+              textAlign: 'center',
+            }}
+          />
+          <Text style={{ fontSize: 14 * fontScale, color: '#333' }}>dBm</Text>
+          <Pressable
+            onPress={applyThreshold}
+            style={{
+              paddingVertical: 8,
+              paddingHorizontal: 14,
+              borderRadius: 10,
+              backgroundColor: '#007AFF',
+            }}
+          >
+            <Text style={{ color: 'white', fontWeight: '600', fontSize: 14 * fontScale }}>Save</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              setThreshold(String(DEFAULT_THRESHOLD));
+              setSavedThreshold(DEFAULT_THRESHOLD);
+              sendRssiThreshold(DEFAULT_THRESHOLD);
+            }}
+            style={{
+              paddingVertical: 8,
+              paddingHorizontal: 14,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: '#ddd',
+            }}
+          >
+            <Text style={{ fontSize: 14 * fontScale }}>Reset</Text>
+          </Pressable>
+        </View>
+        <Text style={{ fontSize: 12 * fontScale, color: '#000', marginTop: 4 }}>
+          Range: -85 to -55 dBm
+        </Text>
+        <Text style={{ fontSize: 12 * fontScale, color: '#000', marginTop: 2 }}>
+          Lower values detect beacons from further away.
+        </Text>
+        <Text style={{ fontSize: 12 * fontScale, color: '#000', marginTop: 6 }}>
+          Leave threshold: {leaveThreshold} dBm
+        </Text>
+        <Text style={{ fontSize: 12 * fontScale, color: '#000', marginTop: 2 }}>
+          Auto-set 5 below to prevent repeated alerts near the boundary.
+        </Text>
+      </View>
 
       {/* Audio transfer status banner */}
       {isSending && (

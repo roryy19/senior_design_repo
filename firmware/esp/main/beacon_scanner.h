@@ -64,6 +64,12 @@ bool beacon_scanner_remove_beacon(const uint8_t *mac_le);
 /* Get the current number of known beacons */
 int beacon_scanner_get_count(void);
 
+/*
+ * Set the RSSI entry threshold at runtime. Leave threshold is auto-set to entry - 5.
+ * entry_threshold: e.g. -75 means alert when RSSI > -75.
+ */
+void beacon_scanner_set_threshold(int8_t entry_threshold);
+
 /* Start the beacon scan FreeRTOS task. Call once from app_main after BLE is initialized. */
 void beacon_scanner_start(void);
 

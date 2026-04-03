@@ -16,6 +16,7 @@ type BleContextType = {
   startScan: () => void;
   disconnect: () => void;
   sendArmLength: (cm: number) => void;
+  sendRssiThreshold: (threshold: number) => void;
   sendAudioToBeacon: (mac: string, audioBase64: string) => Promise<void>;
   registerBeacon: (mac: string) => Promise<void>;
   deleteBeacon: (mac: string) => Promise<void>;
@@ -154,6 +155,7 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
       startScan: () => bleService.startScan(),
       disconnect: () => bleService.disconnect(),
       sendArmLength: (cm) => bleService.sendArmLength(cm),
+      sendRssiThreshold: (threshold) => bleService.sendRssiThreshold(threshold),
       sendAudioToBeacon,
       registerBeacon,
       deleteBeacon,

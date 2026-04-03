@@ -129,21 +129,11 @@ export default function UserSetupScreen() {
       groundToBeltCm,
       beltToHeadCm: heightCm - groundToBeltCm,
       shoulderToFingertipCm,
-      frontSensorDistanceAtTouch: dimensions?.frontSensorDistanceAtTouch,
     };
 
     await saveUserDimensions(newDimensions);
     setDimensions(newDimensions);
     setIsEditing(false);
-  }
-
-  // Configure button (placeholder)
-  function handleConfigure() {
-    Alert.alert(
-      "Configure Front Sensor",
-      "This feature requires the belt sensor to be connected. Stand with your arm extended and fingertips touching a wall to calibrate.",
-      [{ text: "OK" }]
-    );
   }
 
   // Format display value based on unit
@@ -465,25 +455,6 @@ export default function UserSetupScreen() {
         </View>
       )}
 
-      {/* Configure Button */}
-      <View style={{ marginTop: 16 }}>
-        <Pressable
-          onPress={handleConfigure}
-          style={{
-            padding: 14,
-            borderRadius: 10,
-            borderWidth: 1,
-            borderColor: "#ccc",
-            backgroundColor: "#f5f5f5",
-            alignItems: "center",
-          }}
-        >
-          <Text style={{ fontWeight: "600", color: "#666", fontSize: 16 * fontScale }}>Configure Front Sensor</Text>
-        </Pressable>
-        <Text style={{ marginTop: 8, fontSize: 12 * fontScale, opacity: 0.5, textAlign: "center" }}>
-          Requires belt sensor connection
-        </Text>
-      </View>
     </ScrollView>
   );
 }

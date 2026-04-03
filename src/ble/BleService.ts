@@ -28,6 +28,7 @@ type AlertReceivedCb = (alert: AlertPayload) => void;
 //   [0x03, MAC[6]]                                 → audio clip end (finalize storage)
 //   [0x04, MAC[6]]                                 → register beacon MAC for scanning
 //   [0x05, MAC[6]]                                 → delete beacon (remove + delete clip)
+//   [0x06, THRESHOLD_OFFSET]                       → set RSSI threshold (offset = value + 128)
 
 class BleService {
   private manager = new BleManager();
@@ -207,6 +208,24 @@ class BleService {
       console.log(`Registered beacon MAC: ${mac}`);
     } catch (e) {
       console.warn('BLE registerBeacon error:', e);
+    }
+  }
+
+  // Set the RSSI entry threshold on the belt. Leave threshold is auto-set to entry - 5.
+  async sendRssiThreshold(threshold: number) {
+    if (!this.connectedDevice) return;
+    try {
+      const offset = Math.min(255, Math.max(0, threshold + 128));
+      const bytes = new Uint8Array([0x06, offset]);
+      const b64 = btoa(String.fromCharCode(...bytes));
+      await this.connectedDevice.writeCharacteristicWithResponseForService(
+        BELT_SERVICE_UUID,
+        CONFIG_CHAR_UUID,
+        b64
+      );
+      console.log(`Set RSSI threshold: ${threshold} dBm`);
+    } catch (e) {
+      console.warn('BLE sendRssiThreshold error:', e);
     }
   }
 

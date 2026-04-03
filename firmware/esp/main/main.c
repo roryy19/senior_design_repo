@@ -156,6 +156,7 @@ static void on_beacon_detected(const uint8_t *mac_le, int beacon_index)
  *   0x03: Audio end        [0x03, MAC[6]]
  *   0x04: Register beacon  [0x04, MAC[6]]
  *   0x05: Delete beacon    [0x05, MAC[6]]
+ *   0x06: RSSI threshold   [0x06, THRESHOLD_OFFSET]  (offset = value + 128)
  */
 static int config_write_cb(uint16_t conn_handle_arg, uint16_t attr_handle,
                            struct ble_gatt_access_ctxt *ctxt, void *arg)
@@ -239,6 +240,13 @@ static int config_write_cb(uint16_t conn_handle_arg, uint16_t attr_handle,
             mac_le[4] = buf[2];
             mac_le[5] = buf[1];
             beacon_scanner_add_beacon(mac_le);
+        }
+        break;
+
+    case 0x06: /* Set RSSI threshold */
+        if (len >= 2) {
+            int8_t threshold = (int8_t)(buf[1] - 128);
+            beacon_scanner_set_threshold(threshold);
         }
         break;
 

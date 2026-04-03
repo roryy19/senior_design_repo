@@ -29,11 +29,22 @@ static int num_known_beacons = 0;
 
 static beacon_alert_cb_t alert_cb = NULL;
 
+/* Runtime-adjustable thresholds (defaults from #defines) */
+static int8_t rssi_threshold = RSSI_THRESHOLD;
+static int8_t rssi_leave_threshold = RSSI_LEAVE_THRESHOLD;
+
 /* ---------- Public API ---------- */
 
 void beacon_scanner_set_alert_cb(beacon_alert_cb_t cb)
 {
     alert_cb = cb;
+}
+
+void beacon_scanner_set_threshold(int8_t entry_threshold)
+{
+    rssi_threshold = entry_threshold;
+    rssi_leave_threshold = entry_threshold - 5;
+    ESP_LOGI(TAG, "RSSI threshold set to %d (leave: %d)", rssi_threshold, rssi_leave_threshold);
 }
 
 int beacon_scanner_add_beacon(const uint8_t *mac_le)
@@ -141,7 +152,7 @@ static int scan_gap_event_handler(struct ble_gap_event *event, void *arg)
         /* Send RSSI update to phone */
         send_rssi_update(known_beacons[i].mac, avg);
 
-        if (avg > RSSI_THRESHOLD) {
+        if (avg > rssi_threshold) {
             if (!bs->currently_near &&
                 (now_ms - bs->last_alert_time_ms > BEACON_COOLDOWN_MS)) {
                 /* Beacon just entered proximity — fire alert */
@@ -154,7 +165,7 @@ static int scan_gap_event_handler(struct ble_gap_event *event, void *arg)
                     alert_cb(known_beacons[i].mac, i);
                 }
             }
-        } else if (avg < RSSI_LEAVE_THRESHOLD) {
+        } else if (avg < rssi_leave_threshold) {
             /* Hysteresis: must drop 5 dBm below entry threshold to "leave".
              * Prevents alert spam when user is right at the boundary. */
             if (bs->currently_near) {
