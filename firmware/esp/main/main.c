@@ -29,6 +29,7 @@
 #include "beacon_scanner.h"
 #include "audio_player.h"
 #include "clip_storage.h"
+#include "sensor_task.h"
 
 static const char *TAG = "BELT_BLE";
 
@@ -442,6 +443,9 @@ void app_main(void)
     /* Initialize audio player (PWM output) */
     audio_player_init(AUDIO_GPIO);
 
+    /* Initialize distance sensor (I2C bus + VL53L1X boot sequence) */
+    sensor_task_init();
+
     /* Initialize the NimBLE host */
     nimble_port_init();
 
@@ -463,6 +467,9 @@ void app_main(void)
     /* Set up beacon scanner callback and start the scan task */
     beacon_scanner_set_alert_cb(on_beacon_detected);
     beacon_scanner_start();
+
+    /* Start distance sensor reading task */
+    sensor_task_start();
 
     ESP_LOGI(TAG, "Belt initialized. Scanning for beacons + waiting for phone.");
 }
