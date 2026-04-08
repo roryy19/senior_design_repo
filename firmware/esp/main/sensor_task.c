@@ -33,6 +33,12 @@ static const char *TAG = "SENSOR";
 /* Track whether init succeeded. If not, start() is a safe no-op. */
 static bool s_sensor_ready = false;
 
+/* Previous motor level — we only log when it changes to avoid flooding */
+static uint8_t s_last_motor_level = 255;  /* 255 = no previous reading */
+
+/* Previous range status — only log invalid readings when status changes */
+static uint8_t s_last_range_status = 0;
+
 /* ── The FreeRTOS task function ───────────────────────────────────── */
 static void sensor_task(void *param)
 {
@@ -61,8 +67,15 @@ static void sensor_task(void *param)
                 float distance_cm = (float)distance_mm / 10.0f;
                 uint8_t motor_level = categorize_distance_cm(distance_cm);
 
-                ESP_LOGI(TAG, "Distance: %6.1f cm | Motor level: %u/7",
-                         distance_cm, motor_level);
+                /* Only log when motor level changes — keeps console clean
+                 * so beacon/BLE logs remain readable */
+                if (motor_level != s_last_motor_level) {
+                    ESP_LOGI(TAG, "Distance: %6.1f cm | Motor level: %u/7 (was %u)",
+                             distance_cm, motor_level,
+                             s_last_motor_level == 255 ? 0 : s_last_motor_level);
+                    s_last_motor_level = motor_level;
+                }
+                s_last_range_status = 0;  /* reset so next error is logged */
             } else {
                 /* Invalid measurement — log the status code.
                  * This matches the teammate's Arduino code where
@@ -74,7 +87,10 @@ static void sensor_task(void *param)
                  *   4 = Phase fail (out of bounds)
                  *   7 = Wrapped target
                  */
-                ESP_LOGW(TAG, "Invalid reading (status=%u)", range_status);
+                if (range_status != s_last_range_status) {
+                    ESP_LOGW(TAG, "Invalid reading (status=%u)", range_status);
+                    s_last_range_status = range_status;
+                }
             }
         }
 
