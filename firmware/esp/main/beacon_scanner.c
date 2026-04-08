@@ -104,6 +104,13 @@ int beacon_scanner_get_count(void)
     return num_known_beacons;
 }
 
+void beacon_scanner_clear_all(void)
+{
+    ESP_LOGI(TAG, "Clearing all %d known beacons", num_known_beacons);
+    num_known_beacons = 0;
+    memset(beacon_states, 0, sizeof(beacon_states));
+}
+
 /* ---------- RSSI smoothing ---------- */
 
 static void rssi_add_reading(int idx, int8_t rssi)

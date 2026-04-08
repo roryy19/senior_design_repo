@@ -29,6 +29,7 @@ type AlertReceivedCb = (alert: AlertPayload) => void;
 //   [0x04, MAC[6]]                                 → register beacon MAC for scanning
 //   [0x05, MAC[6]]                                 → delete beacon (remove + delete clip)
 //   [0x06, THRESHOLD_OFFSET]                       → set RSSI threshold (offset = value + 128)
+//   [0x07]                                         → clear all beacons + audio (phone will re-sync)
 
 class BleService {
   private manager = new BleManager();
@@ -244,6 +245,24 @@ class BleService {
       console.log(`Deleted beacon MAC: ${mac}`);
     } catch (e) {
       console.warn('BLE deleteBeacon error:', e);
+    }
+  }
+
+  // Tell the belt to clear all beacons and audio clips.
+  // Called before re-syncing so the phone is the single source of truth.
+  async clearAll() {
+    if (!this.connectedDevice) return;
+    try {
+      const bytes = new Uint8Array([0x07]);
+      const b64 = btoa(String.fromCharCode(...bytes));
+      await this.connectedDevice.writeCharacteristicWithResponseForService(
+        BELT_SERVICE_UUID,
+        CONFIG_CHAR_UUID,
+        b64
+      );
+      console.log('Sent clear-all to belt');
+    } catch (e) {
+      console.warn('BLE clearAll error:', e);
     }
   }
 

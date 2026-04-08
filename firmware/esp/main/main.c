@@ -158,6 +158,7 @@ static void on_beacon_detected(const uint8_t *mac_le, int beacon_index)
  *   0x04: Register beacon  [0x04, MAC[6]]
  *   0x05: Delete beacon    [0x05, MAC[6]]
  *   0x06: RSSI threshold   [0x06, THRESHOLD_OFFSET]  (offset = value + 128)
+ *   0x07: Clear all         [0x07]  (remove all beacons + audio clips — phone will re-sync)
  */
 static int config_write_cb(uint16_t conn_handle_arg, uint16_t attr_handle,
                            struct ble_gatt_access_ctxt *ctxt, void *arg)
@@ -263,6 +264,12 @@ static int config_write_cb(uint16_t conn_handle_arg, uint16_t attr_handle,
             beacon_scanner_remove_beacon(mac_le);
             clip_storage_delete(mac_le);
         }
+        break;
+
+    case 0x07: /* Clear all beacons + audio clips (phone will re-sync after this) */
+        ESP_LOGI(TAG, "Clearing all beacons and audio clips (phone sync)");
+        beacon_scanner_clear_all();
+        clip_storage_clear_all();
         break;
 
     default:

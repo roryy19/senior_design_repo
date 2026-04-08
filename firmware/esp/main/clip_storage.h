@@ -46,6 +46,9 @@ bool clip_storage_exists(const uint8_t mac[6]);
 /* Delete a clip for the given MAC. Returns true if deleted, false if not found. */
 bool clip_storage_delete(const uint8_t mac[6]);
 
+/* Delete all stored audio clips from SPIFFS. */
+void clip_storage_clear_all(void);
+
 #ifdef __cplusplus
 }
 #endif

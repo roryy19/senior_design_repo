@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include "esp_log.h"
 #include "esp_spiffs.h"
 
@@ -114,4 +115,29 @@ bool clip_storage_delete(const uint8_t mac[6])
 
     ESP_LOGD(TAG, "Clip not found for delete: %s", path);
     return false;
+}
+
+void clip_storage_clear_all(void)
+{
+    DIR *dir = opendir(MOUNT_POINT);
+    if (!dir) {
+        ESP_LOGW(TAG, "Cannot open SPIFFS directory for clearing");
+        return;
+    }
+
+    int count = 0;
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        /* Only delete .pcm files (our audio clips) */
+        const char *ext = strrchr(entry->d_name, '.');
+        if (ext && strcmp(ext, ".pcm") == 0) {
+            char path[280];
+            snprintf(path, sizeof(path), "%s/%s", MOUNT_POINT, entry->d_name);
+            remove(path);
+            count++;
+        }
+    }
+    closedir(dir);
+
+    ESP_LOGI(TAG, "Cleared %d audio clips from flash", count);
 }

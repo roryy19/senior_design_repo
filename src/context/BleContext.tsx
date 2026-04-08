@@ -3,6 +3,7 @@ import { AppState } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { bleService, AlertPayload, BleConnectionState } from '../ble/BleService';
 import { loadSensors, loadUserDimensions } from '../storage/registry';
+import { generateSpeechAudio } from '../native/TtsSynthesizer';
 
 // An alert enriched with a human-readable name (looked up from sensor list or direction map).
 export type BleAlert = {
@@ -61,18 +62,33 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
       setConnectionState(state);
       if (state === 'connected') {
         (async () => {
+          // Clear belt state so phone is the single source of truth.
+          // This handles beacons added/edited/deleted while disconnected.
+          await bleService.clearAll();
+
           // Send arm length
           const dims = await loadUserDimensions();
           if (dims?.shoulderToFingertipCm) {
             bleService.sendArmLength(dims.shoulderToFingertipCm);
           }
-          // Register all saved sensor MACs with the belt
+
+          // Re-register all beacons and send their audio clips
           const sensors = await loadSensors();
           for (const s of sensors) {
             if (s.macAddress) {
               await bleService.registerBeacon(s.macAddress);
+              // Generate and send TTS audio so belt has clips in flash
+              try {
+                const audioBase64 = await generateSpeechAudio(`${s.name} ahead`);
+                if (audioBase64) {
+                  await bleService.sendAudioClip(s.macAddress, audioBase64);
+                }
+              } catch (e) {
+                console.warn(`Failed to send audio for ${s.name}:`, e);
+              }
             }
           }
+          console.log(`Sync complete: ${sensors.filter(s => s.macAddress).length} beacons sent to belt`);
         })();
       }
     });

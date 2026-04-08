@@ -64,6 +64,9 @@ bool beacon_scanner_remove_beacon(const uint8_t *mac_le);
 /* Get the current number of known beacons */
 int beacon_scanner_get_count(void);
 
+/* Remove all known beacons and reset their tracking state. */
+void beacon_scanner_clear_all(void);
+
 /*
  * Set the RSSI entry threshold at runtime. Leave threshold is auto-set to entry - 5.
  * entry_threshold: e.g. -75 means alert when RSSI > -75.
