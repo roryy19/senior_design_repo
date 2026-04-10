@@ -30,11 +30,12 @@
 #include "audio_player.h"
 #include "clip_storage.h"
 #include "sensor_task.h"
+#include "shift_register.h"
 
 static const char *TAG = "BELT_BLE";
 
 /* GPIO pin for audio PWM output (connect to RC filter -> LM386 input) */
-#define AUDIO_GPIO GPIO_NUM_1
+#define AUDIO_GPIO GPIO_NUM_7
 
 /* ---------- UUIDs (must match src/ble/uuids.ts in the phone app) ----------
  *
@@ -452,6 +453,261 @@ void app_main(void)
 
     /* Initialize distance sensor (I2C bus + VL53L1X boot sequence) */
     sensor_task_init();
+
+    /* Initialize shift register GPIOs for motor output */
+    shift_register_init();
+
+    /* ── Shift register hardware test ──────────────────────────────
+     * Uncomment ONE test block at a time, flash, and observe motors.
+     * Remove/re-comment after verifying. See shift_register.h for
+     * the bit layout explanation.
+     */
+
+    /* TEST 1: All outputs ON for 5 seconds (verify wiring + power)
+     * If motor(s) vibrate then stop, wiring is correct.
+     * If nothing happens: check OE pin (LOW?), RESET pin (HIGH?),
+     * motor power supply, DATA/CLK/LATCH connections.
+     */
+    /*
+    {
+        uint8_t all_on[3] = {0xFF, 0xFF, 0xFF};
+        shift_register_send(all_on, 3);
+        ESP_LOGI(TAG, "TEST: all motor outputs ON (0xFF 0xFF 0xFF)");
+        vTaskDelay(pdMS_TO_TICKS(5000));
+        shift_register_clear();
+        ESP_LOGI(TAG, "TEST: all motor outputs OFF");
+    }
+    */
+
+    /* TEST 2: Two motors, one LSB bit + one MSB bit, spatially separated.
+     *
+     * Goal: verify bit ordering within a motor's 3-bit level field by
+     * lighting up exactly ONE bit of two different motors at the same
+     * time, with an all-zero motor between them so the HIGH pins are
+     * visibly separated. Static hold — probe at your leisure.
+     *
+     * Pattern:
+     *   Motor 7 at level 0b001  → only the LSB of motor 7's field HIGH
+     *   Motor 6 at level 0b000  → all off (the gap)
+     *   Motor 5 at level 0b100  → only the MSB of motor 5's field HIGH
+     *
+     * Packed layout (motor N → bits 23-3N..21-3N of a 24-bit word):
+     *   Motor 5 = bits 8..6  → bit 8 is motor 5's MSB
+     *   Motor 6 = bits 5..3
+     *   Motor 7 = bits 2..0  → bit 0 is motor 7's LSB
+     *
+     * Which bytes carry the HIGH bits:
+     *   bit 8 = byte[1] bit 0  → byte[1] = 0x01
+     *   bit 0 = byte[2] bit 0  → byte[2] = 0x01
+     *   (motor 5 actually straddles the byte[1]/byte[2] boundary; its
+     *    MSB lives in byte[1], its lower two bits would live in byte[2])
+     *
+     * Final pattern: {0x00, 0x01, 0x01}
+     *
+     * Expected output pins (MSB-first shift, 3 × 74HC595 daisy chain,
+     * chip 1 = nearest ESP32, chip 3 = furthest):
+     *   Motor 5 MSB (stream bit 15) → chip 2 Q0 HIGH
+     *   Motor 7 LSB (stream bit 23) → chip 1 Q0 HIGH
+     *   Everything else LOW
+     *
+     * Interpretation:
+     *   - Two HIGH pins, one on chip 1 and one on chip 2, both at Q0.
+     *   - The pin that's HIGH on chip 1 shows where motor 7's LSB lands.
+     *   - The pin that's HIGH on chip 2 shows where motor 5's MSB lands.
+     *   - If the HIGH pins don't match these positions, shift direction
+     *     or daisy-chain order is different than assumed.
+     */
+    {
+        uint8_t pattern[3] = {0x00, 0x00, 0x04};   
+        //uint8_t pattern[3] = {0x00, 0x01, 0x01};
+        shift_register_send(pattern, 3);
+        ESP_LOGI(TAG, "TEST: motor7=0b001 (LSB), motor6=0, motor5=0b100 (MSB)");
+        ESP_LOGI(TAG, "TEST: pattern {0x00, 0x01, 0x01} — holding forever");
+        ESP_LOGI(TAG, "TEST: expect chip 1 Q0 HIGH (motor 7 LSB) "
+                      "and chip 2 Q0 HIGH (motor 5 MSB)");
+        //while (1) {
+            //vTaskDelay(pdMS_TO_TICKS(5000));
+        //}
+    }
+
+    /* TEST 2.2: Power only motor 1 (the SECOND motor — index 1 in code,
+     *           "motor 2" from a 1-based human count).
+     *
+     * Motor 1 occupies bits 20-18 of the 24-bit packed word, which
+     * lands in byte[0] bits 4-2. At level 7 (all 3 level bits HIGH):
+     *
+     *   byte[0] = 0b00011100 = 0x1C
+     *   byte[1] = 0x00
+     *   byte[2] = 0x00
+     *
+     * Expected output pins (MSB-first, 3 × 74HC595 daisy chain,
+     * chip 3 = furthest from ESP32):
+     *   byte[0] bit 4 (stream pos 3)  → chip 3 Q4 HIGH  (motor 1 MSB)
+     *   byte[0] bit 3 (stream pos 4)  → chip 3 Q3 HIGH
+     *   byte[0] bit 2 (stream pos 5)  → chip 3 Q2 HIGH  (motor 1 LSB)
+     *
+     * So: three adjacent Q pins HIGH on the furthest chip in the chain,
+     * everything else LOW. Holds forever so you can probe.
+     *
+     * NOTE: TEST 2 above has an infinite loop. Comment out TEST 2
+     * before flashing if you want TEST 2.2 to actually run.
+     */
+    /*
+    {
+        uint8_t pattern[3] = {0x1C, 0x00, 0x00};
+        shift_register_send(pattern, 3);
+        ESP_LOGI(TAG, "TEST 2.2: motor 1 (2nd motor) at level 7");
+        ESP_LOGI(TAG, "TEST 2.2: pattern {0x1C, 0x00, 0x00} — holding forever");
+        ESP_LOGI(TAG, "TEST 2.2: expect chip 3 Q4/Q3/Q2 HIGH, all else LOW");
+        while (1) {
+            vTaskDelay(pdMS_TO_TICKS(1000));
+        }
+    }
+    */
+
+    /* TEST 2.1: Latch independence verification.
+     *
+     * Proves the 74HC595's output register holds its value even when
+     * new data is shifted into the internal shift register. The output
+     * only updates on a rising edge of LATCH (RCLK).
+     *
+     * Sequence:
+     *   1. Shift in FF F0 00 + pulse LATCH → output register = FF F0 00
+     *   2. Shift in 00 0F FF WITHOUT pulsing LATCH
+     *        (shift register internally now holds 00 0F FF,
+     *         but the output register should still hold FF F0 00)
+     *
+     * If the latch works correctly, probing the output pins should
+     * STILL read FF F0 00 (12 HIGH followed by 12 LOW), not 00 0F FF.
+     *
+     * NOTE: TEST 2 above has an infinite loop, so TEST 2.1 won't run
+     * unless you comment out TEST 2 first.
+     */
+    /*
+    {
+        uint8_t first[3]  = {0xFF, 0xF0, 0x00};
+        uint8_t second[3] = {0x00, 0x0F, 0xFF};
+
+        // Step 1: Normal send — shifts and pulses LATCH at the end.
+        // Output register now holds first[].
+        shift_register_send(first, 3);
+        ESP_LOGI(TAG, "TEST 2.1: Latched 0xFF 0xF0 0x00");
+        vTaskDelay(pdMS_TO_TICKS(2000));
+
+        // Step 2: Manually shift in second[] WITHOUT pulsing LATCH.
+        // Bit-bang DATA + CLK only. The output register should
+        // still hold first[] because we never gave LATCH a rising edge.
+        for (int i = 0; i < 3; i++) {
+            for (int bit = 7; bit >= 0; bit--) {
+                gpio_set_level(SR_DATA_PIN, (second[i] >> bit) & 0x01);
+                gpio_set_level(SR_CLK_PIN, 1);
+                gpio_set_level(SR_CLK_PIN, 0);
+            }
+        }
+        // Deliberately NOT pulsing LATCH here.
+
+        ESP_LOGI(TAG, "TEST 2.1: Shifted 0x00 0x0F 0xFF WITHOUT latch pulse");
+        ESP_LOGI(TAG, "TEST 2.1: Outputs should STILL show 0xFF 0xF0 0x00");
+        while (1) {
+            vTaskDelay(pdMS_TO_TICKS(1000));
+        }
+    }
+    */
+
+    /* TEST 3: Walking motor pattern (verify bit ordering, when multiple
+     * motors are wired). Each motor activates at level 7 for 1 second.
+     * Motors should activate in order 0→7 around the belt.
+     * If they activate in reverse (7→0), flip to LSB-first in
+     * shift_register_c (see comment in shift_register_send).
+     */
+    /*
+    {
+        const uint8_t patterns[8][3] = {
+            {0xE0, 0x00, 0x00},
+            {0x1C, 0x00, 0x00},
+            {0x03, 0x80, 0x00},
+            {0x00, 0x70, 0x00},
+            {0x00, 0x0E, 0x00},
+            {0x00, 0x01, 0xC0},
+            {0x00, 0x00, 0x38},
+            {0x00, 0x00, 0x07},
+        };
+        for (int m = 0; m < 8; m++) {
+            ESP_LOGI(TAG, "TEST: Motor %d ON (level 7)", m);
+            shift_register_send(patterns[m], 3);
+            vTaskDelay(pdMS_TO_TICKS(1000));
+        }
+        shift_register_clear();
+        ESP_LOGI(TAG, "TEST: All motors OFF");
+    }
+    */
+
+    /* TEST 4: Walk motor 0 through levels 1..7 using the CURRENT
+     *         (known-wrong) wiring so we can verify functionality
+     *         end-to-end. The real fix — making the packer match
+     *         the physical bit order — comes later.
+     *
+     * Observed physical wiring for motor 0:
+     *   - Motor 0 lives in byte[2] bits 2-0 (not byte[0] as the
+     *     packer assumes), because motor 0 is on chip 1 (nearest
+     *     the ESP32), not chip 3.
+     *   - Within those 3 bits, the order is REVERSED from the
+     *     packer's layout:
+     *       byte[2] bit 2 → motor's level LSB (value 1)
+     *       byte[2] bit 1 → motor's level middle (value 2)
+     *       byte[2] bit 0 → motor's level MSB (value 4)
+     *
+     * So to display level N on the motor, we bit-reverse N into
+     * the low 3 bits of byte[2]:
+     *   level 1 (001) → byte[2] = 0x04
+     *   level 2 (010) → byte[2] = 0x02
+     *   level 3 (011) → byte[2] = 0x06
+     *   level 4 (100) → byte[2] = 0x01
+     *   level 5 (101) → byte[2] = 0x05
+     *   level 6 (110) → byte[2] = 0x03
+     *   level 7 (111) → byte[2] = 0x07
+     *
+     * Expected behavior: motor 0 should visibly count 1→2→3→…→7,
+     * each held for 5 seconds, then clear and fall through to BLE.
+     */
+    {
+        const uint8_t patterns[7][3] = {
+            {0x00, 0x00, 0x04}, // level 1 (001)
+            {0x00, 0x00, 0x02}, // level 2 (010)
+            {0x00, 0x00, 0x06}, // level 3 (011)
+            {0x00, 0x00, 0x01}, // level 4 (100)
+            {0x00, 0x00, 0x05}, // level 5 (101)
+            {0x00, 0x00, 0x03}, // level 6 (110)
+            {0x00, 0x00, 0x07}, // level 7 (111)
+        };
+        for (int lvl = 0; lvl < 7; lvl++) {
+            ESP_LOGI(TAG, "TEST 4: motor 0 at level %d", lvl + 1);
+            shift_register_send(patterns[lvl], 3);
+            vTaskDelay(pdMS_TO_TICKS(2000));
+        }
+        shift_register_clear();
+        ESP_LOGI(TAG, "TEST 4: motor 0 OFF");
+    }
+    /* TEST 4.1: Hold motor 0 at level 0b001 (just the LSB of its
+     *           3-bit level field) forever so you can probe.
+     *
+     * Motor 0 = byte[0] bits 7-5, level 0b001 → byte[0] bit 5 HIGH:
+     *   byte[0] = 0x20, byte[1] = 0x00, byte[2] = 0x00
+     *
+     * Expected output: chip 3 Q5 HIGH, everything else LOW.
+     */
+    /*
+    {
+        uint8_t pattern[3] = {0x20, 0x00, 0x00};
+        shift_register_send(pattern, 3);
+        ESP_LOGI(TAG, "TEST 4.1: motor 0 at level 0b001 — "
+                      "expect chip 3 Q5 HIGH, holding forever");
+        while (1) {
+            vTaskDelay(pdMS_TO_TICKS(1000));
+        }
+    }
+    */
+    
 
     /* Initialize the NimBLE host */
     nimble_port_init();

@@ -352,11 +352,80 @@ static vl53l1x_err_t set_inter_measurement_55ms(void)
  *                         Public API functions                       *
  * ═══════════════════════════════════════════════════════════════════ */
 
+/* ── Create device on an external bus (for mux configurations) ───── */
+vl53l1x_err_t vl53l1x_create_on_bus(i2c_master_bus_handle_t bus)
+{
+    s_bus_handle = bus;
+
+    i2c_device_config_t dev_cfg = {
+        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
+        .device_address = VL53L1X_ADDR,
+        .scl_speed_hz = I2C_FREQ_HZ,
+    };
+
+    esp_err_t rc = i2c_master_bus_add_device(s_bus_handle, &dev_cfg, &s_dev_handle);
+    if (rc != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to add I2C device: %s", esp_err_to_name(rc));
+        return VL53L1X_ERROR;
+    }
+
+    ESP_LOGI(TAG, "Sensor device added to bus (addr=0x%02X)", VL53L1X_ADDR);
+    return VL53L1X_OK;
+}
+
+/* ── Run sensor init sequence (on currently-selected mux channel) ── */
+vl53l1x_err_t vl53l1x_sensor_init(void)
+{
+    /* Verify the sensor is connected by reading model ID */
+    uint8_t model_id = 0;
+    vl53l1x_err_t err = read_byte(REG_MODEL_ID, &model_id);
+    if (err != VL53L1X_OK || model_id != 0xEA) {
+        ESP_LOGE(TAG, "Sensor not found! Expected model ID 0xEA, got 0x%02X. "
+                 "Check wiring: VIN->3.3V, GND->GND, SDA->GPIO%d, SCL->GPIO%d",
+                 model_id, I2C_SDA_PIN, I2C_SCL_PIN);
+        return VL53L1X_ERROR;
+    }
+    ESP_LOGI(TAG, "Sensor detected (model ID: 0x%02X)", model_id);
+
+    /* Wait for firmware boot (up to ~1.2s after power-on) */
+    err = wait_for_boot();
+    if (err != VL53L1X_OK) return err;
+    ESP_LOGI(TAG, "Sensor firmware ready");
+
+    /* Write the 91-byte default configuration blob */
+    err = write_default_config();
+    if (err != VL53L1X_OK) return err;
+
+    /* Perform one dummy measurement (required by ST for calibration) */
+    err = write_byte(REG_SYSTEM_START, 0x40);
+    if (err != VL53L1X_OK) return err;
+
+    bool ready = false;
+    for (int i = 0; i < 100 && !ready; i++) {
+        vl53l1x_data_ready(&ready);
+        if (!ready) vTaskDelay(pdMS_TO_TICKS(10));
+    }
+    vl53l1x_clear_interrupt();
+    write_byte(REG_SYSTEM_START, 0x00);
+
+    /* Post-init register tweaks (from ST ULD) */
+    write_byte(REG_VHV_CONFIG_TIMEOUT_MACROP_LOOP_BOUND, 0x09);
+    write_byte(REG_MYSTERY_0B, 0x00);
+
+    /* Configure for Long mode + 50ms timing budget */
+    err = set_distance_mode_long();     if (err != VL53L1X_OK) return err;
+    err = set_timing_budget_50ms();     if (err != VL53L1X_OK) return err;
+    err = set_inter_measurement_55ms(); if (err != VL53L1X_OK) return err;
+
+    s_initialized = true;
+    ESP_LOGI(TAG, "Sensor configured: Long mode, 50ms timing budget");
+    return VL53L1X_OK;
+}
+
+/* ── Single-sensor convenience (creates bus + device + inits) ────── */
 vl53l1x_err_t vl53l1x_init(void)
 {
-    /* ── Step 1: Create the I2C bus ─────────────────────────────────
-     * This is the ESP-IDF equivalent of Arduino's Wire.begin(8, 9).
-     * It configures the ESP32-S3's I2C hardware peripheral. */
+    /* Step 1: Create the I2C bus (ESP-IDF equivalent of Wire.begin(8, 9)) */
     i2c_master_bus_config_t bus_cfg = {
         .i2c_port = I2C_NUM_0,
         .sda_io_num = I2C_SDA_PIN,
@@ -372,79 +441,14 @@ vl53l1x_err_t vl53l1x_init(void)
         return VL53L1X_ERROR;
     }
 
-    /* ── Step 2: Add the VL53L1X as an I2C device ──────────────────
-     * This is like telling the bus "there's a sensor at address 0x29,
-     * and we want to talk to it at 400kHz." */
-    i2c_device_config_t dev_cfg = {
-        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
-        .device_address = VL53L1X_ADDR,
-        .scl_speed_hz = I2C_FREQ_HZ,
-    };
-
-    rc = i2c_master_bus_add_device(s_bus_handle, &dev_cfg, &s_dev_handle);
-    if (rc != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to add I2C device: %s", esp_err_to_name(rc));
-        return VL53L1X_ERROR;
-    }
-
     ESP_LOGI(TAG, "I2C bus initialized (SDA=%d, SCL=%d, %dkHz)",
              I2C_SDA_PIN, I2C_SCL_PIN, I2C_FREQ_HZ / 1000);
 
-    /* ── Step 3: Verify the sensor is connected ────────────────────
-     * Read the model ID register. Should be 0xEACC (model 0xEA, type 0xCC).
-     * If this fails, the sensor isn't wired correctly. */
-    uint8_t model_id = 0;
-    vl53l1x_err_t err = read_byte(REG_MODEL_ID, &model_id);
-    if (err != VL53L1X_OK || model_id != 0xEA) {
-        ESP_LOGE(TAG, "Sensor not found! Expected model ID 0xEA, got 0x%02X. "
-                 "Check wiring: VIN->3.3V, GND->GND, SDA->GPIO%d, SCL->GPIO%d",
-                 model_id, I2C_SDA_PIN, I2C_SCL_PIN);
-        return VL53L1X_ERROR;
-    }
-    ESP_LOGI(TAG, "Sensor detected (model ID: 0x%02X)", model_id);
-
-    /* ── Step 4: Wait for firmware boot ────────────────────────────
-     * The sensor's internal firmware needs time to initialize after
-     * power-on. This can take up to 1.2 seconds. */
-    err = wait_for_boot();
-    if (err != VL53L1X_OK) return err;
-    ESP_LOGI(TAG, "Sensor firmware ready");
-
-    /* ── Step 5: Write default configuration ───────────────────────
-     * This is the 91-byte blob that sets up the sensor's measurement
-     * engine. Equivalent to sensor.init() in the Pololu library. */
-    err = write_default_config();
+    /* Step 2: Add device + run sensor init */
+    vl53l1x_err_t err = vl53l1x_create_on_bus(s_bus_handle);
     if (err != VL53L1X_OK) return err;
 
-    /* ── Step 6: Perform one dummy measurement (required by ST) ────
-     * The ST ULD does a start-wait-clear-stop cycle after writing the
-     * config. This calibrates the sensor's internal state. */
-    err = write_byte(REG_SYSTEM_START, 0x40);  /* start ranging */
-    if (err != VL53L1X_OK) return err;
-
-    bool ready = false;
-    for (int i = 0; i < 100 && !ready; i++) {
-        vl53l1x_data_ready(&ready);
-        if (!ready) vTaskDelay(pdMS_TO_TICKS(10));
-    }
-    vl53l1x_clear_interrupt();
-    write_byte(REG_SYSTEM_START, 0x00);  /* stop ranging */
-
-    /* ── Step 7: Post-init register tweaks (from ST ULD) ─────────── */
-    write_byte(REG_VHV_CONFIG_TIMEOUT_MACROP_LOOP_BOUND, 0x09);
-    write_byte(REG_MYSTERY_0B, 0x00);
-
-    /* ── Step 8: Configure for Long mode + 50ms timing budget ──────
-     * This matches the teammate's Arduino settings:
-     *   DISTANCE_MODE = 2 (Long, up to 4m)
-     *   TIMING_BUDGET_MS = 50 */
-    err = set_distance_mode_long();   if (err != VL53L1X_OK) return err;
-    err = set_timing_budget_50ms();   if (err != VL53L1X_OK) return err;
-    err = set_inter_measurement_55ms(); if (err != VL53L1X_OK) return err;
-
-    s_initialized = true;
-    ESP_LOGI(TAG, "Sensor configured: Long mode, 50ms timing budget");
-    return VL53L1X_OK;
+    return vl53l1x_sensor_init();
 }
 
 vl53l1x_err_t vl53l1x_start_ranging(void)
