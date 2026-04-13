@@ -60,23 +60,21 @@ void shift_register_init(void)
 
 void shift_register_send(const uint8_t *data, int num_bytes)
 {
-    /* Shift out each byte, MSB first.
+    /* Shift out bytes in reverse order, LSB-first within each byte.
      *
-     * For each bit:
-     *   1. Set DATA pin to the bit value
-     *   2. Pulse CLK high then low (rising edge captures the bit)
+     * This reverses the entire 24-bit stream compared to a naive
+     * MSB-first send. The reversal is required because the physical
+     * motor wiring has motor 0 on the nearest 74HC595 chip (chip 1),
+     * while the packer puts motor 0 in the high bits of byte[0]
+     * (which would land on the farthest chip with MSB-first).
      *
-     * The first bit shifted out (byte[0] bit 7) ends up at the far
-     * end of the daisy chain (last 74HC595's Q7). This means:
-     *   - Byte[0] bits 7-5 = Motor 0 (3-bit level)
-     *   - Byte[0] bits 4-2 = Motor 1
-     *   - ... and so on per the packer's bit layout
-     *
-     * If motors appear in reverse order during testing, flip the
-     * inner loop to count bit = 0..7 instead of 7..0.
+     * After this reversal:
+     *   - Motor 0 (byte[0] bits 7-5) → chip 1 Q0/Q1/Q2 (nearest)
+     *   - Motor 7 (byte[2] bits 2-0) → chip 3 Q5/Q6/Q7 (farthest)
+     *   - Within each motor: MSB on lower Q#, LSB on higher Q#
      */
-    for (int i = 0; i < num_bytes; i++) {
-        for (int bit = 7; bit >= 0; bit--) {
+    for (int i = num_bytes - 1; i >= 0; i--) {
+        for (int bit = 0; bit <= 7; bit++) {
             gpio_set_level(SR_DATA_PIN, (data[i] >> bit) & 0x01);
             gpio_set_level(SR_CLK_PIN, 1);  /* rising edge: bit captured */
             gpio_set_level(SR_CLK_PIN, 0);
