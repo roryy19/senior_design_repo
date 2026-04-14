@@ -527,7 +527,8 @@ void app_main(void)
      *   level 4 = 0x80, level 5 = 0xA0, level 6 = 0xC0,
      *   level 7 = 0xE0
      */
-    
+     
+    /*
     {
         const uint8_t patterns[7][3] = {
             {0x20, 0x00, 0x00}, // level 1
@@ -547,7 +548,7 @@ void app_main(void)
         ESP_LOGI(TAG, "TEST 4: motor 0 OFF");
     }
     
-    
+    */
 
     /* Initialize the NimBLE host */
     nimble_port_init();

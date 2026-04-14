@@ -65,6 +65,15 @@ vl53l1x_err_t vl53l1x_init(void);
 vl53l1x_err_t vl53l1x_create_on_bus(i2c_master_bus_handle_t bus);
 
 /*
+ * Set the I2C device handle directly (alternative to vl53l1x_create_on_bus).
+ *
+ * Use this when the caller creates the device handle externally (e.g.,
+ * when sharing a device handle between VL53L1X and VL53L0X drivers).
+ * Both sensor types share I2C address 0x29.
+ */
+void vl53l1x_set_device(i2c_master_dev_handle_t dev);
+
+/*
  * Run the sensor initialization sequence on the currently-selected sensor.
  *
  * Performs: model ID check, firmware boot wait, default config write,

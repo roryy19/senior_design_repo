@@ -373,6 +373,12 @@ vl53l1x_err_t vl53l1x_create_on_bus(i2c_master_bus_handle_t bus)
     return VL53L1X_OK;
 }
 
+/* ── Set device handle directly (for shared handle configurations) ── */
+void vl53l1x_set_device(i2c_master_dev_handle_t dev)
+{
+    s_dev_handle = dev;
+}
+
 /* ── Run sensor init sequence (on currently-selected mux channel) ── */
 vl53l1x_err_t vl53l1x_sensor_init(void)
 {

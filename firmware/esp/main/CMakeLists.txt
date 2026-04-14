@@ -4,6 +4,7 @@ idf_component_register(
          "audio_player.c"
          "clip_storage.c"
          "vl53l1x.c"
+         "vl53l0x.c"
          "sensor_task.c"
          "shift_register.c"
          "pca9548a.c"
