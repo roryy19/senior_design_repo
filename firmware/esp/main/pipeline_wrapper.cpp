@@ -12,18 +12,23 @@
 #include "pipeline_wrapper.h"
 #include "pipeline.h"  /* from firmware/src/core/ (C++, namespace firmware) */
 
+/* Set by main.c 0x01 config handler when the phone sends the user's
+ * shoulder-to-fingertip length. 0.0f means "use unscaled defaults". */
+static float s_arm_length_cm = 0.0f;
+
+extern "C" void pipeline_set_arm_length(float cm) {
+    s_arm_length_cm = cm;
+}
+
 extern "C" void pipeline_process(
     const float sensor_distances_cm[PIPELINE_TOTAL_SENSORS],
     uint8_t shift_reg_out[PIPELINE_SHIFT_REG_BYTES],
     uint8_t motor_levels_out[PIPELINE_NUM_MOTORS])
 {
-    /* Call the C++ pipeline. Pass 0.0f for armLengthCm to use the
-     * default (unscaled) thresholds. When the phone sends the user's
-     * arm length via BLE config command 0x01, we can update this. */
     firmware::processSensorReadings(
         sensor_distances_cm,
         shift_reg_out,
         motor_levels_out,
-        0.0f
+        s_arm_length_cm
     );
 }

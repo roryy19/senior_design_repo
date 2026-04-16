@@ -32,6 +32,14 @@ extern "C" {
 #define PIPELINE_SHIFT_REG_BYTES     3
 
 /*
+ * Set the user's arm length in cm. Used by the categorizer to scale
+ * distance thresholds. Pass 0.0f to disable scaling (use unscaled
+ * defaults). Safe to call at runtime — sensor_task will pick up the
+ * new value on its next tick.
+ */
+void pipeline_set_arm_length(float cm);
+
+/*
  * Run the full sensor-to-motor pipeline.
  *
  * Takes 12 raw distance readings and produces:

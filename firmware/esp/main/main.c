@@ -31,6 +31,7 @@
 #include "clip_storage.h"
 #include "sensor_task.h"
 #include "shift_register.h"
+#include "pipeline_wrapper.h"
 
 static const char *TAG = "BELT_BLE";
 
@@ -175,7 +176,9 @@ static int config_write_cb(uint16_t conn_handle_arg, uint16_t attr_handle,
 
     case 0x01: /* Arm length */
         if (len >= 2) {
-            ESP_LOGI(TAG, "Received arm length from phone: %d cm", buf[1]);
+            uint8_t arm_cm = buf[1];
+            ESP_LOGI(TAG, "Arm length from phone: %d cm", arm_cm);
+            pipeline_set_arm_length((float)arm_cm);
         }
         break;
 
@@ -527,28 +530,37 @@ void app_main(void)
      *   level 4 = 0x80, level 5 = 0xA0, level 6 = 0xC0,
      *   level 7 = 0xE0
      */
-     
-    /*
-    {
-        const uint8_t patterns[7][3] = {
-            {0x20, 0x00, 0x00}, // level 1
-            {0x40, 0x00, 0x00}, // level 2
-            {0x60, 0x00, 0x00}, // level 3
-            {0x80, 0x00, 0x00}, // level 4
-            {0xA0, 0x00, 0x00}, // level 5
-            {0xC0, 0x00, 0x00}, // level 6
-            {0xE0, 0x00, 0x00}, // level 7
-        };
-        for (int lvl = 0; lvl < 7; lvl++) {
-            ESP_LOGI(TAG, "TEST 4: motor 0 at level %d", lvl + 1);
-            shift_register_send(patterns[lvl], 3);
-            vTaskDelay(pdMS_TO_TICKS(200));
-        }
-        shift_register_clear();
-        ESP_LOGI(TAG, "TEST 4: motor 0 OFF");
-    }
+
+    // {
+    //     const uint8_t patterns[8][3] = {
+    //         {0x20, 0x00, 0x00}, // level 1
+    //         {0x40, 0x00, 0x00}, // level 2
+    //         {0x60, 0x00, 0x00}, // level 3
+    //         {0x80, 0x00, 0x00}, // level 4
+    //         {0xA0, 0x00, 0x00}, // level 5
+    //         {0xC0, 0x00, 0x00}, // level 6
+    //         {0xE0, 0x00, 0x00}, // level 7
+    //         {0x00, 0x00, 0x00}, // all off
+    //     };
+    //     for (int lvl = 0; lvl < 8; lvl++) {
+    //         ESP_LOGI(TAG, "TEST 4: motor 0 at level %d", lvl + 1);
+    //         shift_register_send(patterns[lvl], 3);
+    //         vTaskDelay(pdMS_TO_TICKS(2000));
+    //     }
+    //     shift_register_clear();
+    //     ESP_LOGI(TAG, "TEST 4: motor 0 OFF");
+    //     /* Stay here — don't let sensor_task overwrite the shift registers */
+    //     while (1) { vTaskDelay(pdMS_TO_TICKS(1000)); }
+    // }    
+
+    // test for just one motor value
+    // {
+    //     uint8_t pattern[3] = {0xE0, 0x00, 0x00}; // motor 0 at level 7
+    //     shift_register_send(pattern, 3);
+    //     ESP_LOGI(TAG, "TEST: motor 0 at level 0 — holding forever");
+    //     while (1) { vTaskDelay(pdMS_TO_TICKS(1000)); }
+    // }
     
-    */
 
     /* Initialize the NimBLE host */
     nimble_port_init();

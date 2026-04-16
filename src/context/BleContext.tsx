@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useRef, useState } from 'r
 import { AppState } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { bleService, AlertPayload, BleConnectionState } from '../ble/BleService';
-import { loadSensors, loadUserDimensions } from '../storage/registry';
+import { loadSensors, loadUserDimensions, loadRssiThreshold } from '../storage/registry';
 import { generateSpeechAudio } from '../native/TtsSynthesizer';
 
 // An alert enriched with a human-readable name (looked up from sensor list or direction map).
@@ -71,6 +71,10 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
           if (dims?.shoulderToFingertipCm) {
             bleService.sendArmLength(dims.shoulderToFingertipCm);
           }
+
+          // Resend saved RSSI threshold so belt matches phone after a reboot
+          const savedThreshold = await loadRssiThreshold();
+          bleService.sendRssiThreshold(savedThreshold);
 
           // Re-register all beacons and send their audio clips
           const sensors = await loadSensors();

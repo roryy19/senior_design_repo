@@ -54,7 +54,7 @@ static const char *TAG = "SENSOR";
 
 /* Uncomment to broadcast a single sensor's reading to ALL motors.
  * When commented out, normal angular mapping is used even with 1 sensor. */
-#define SINGLE_SENSOR_BROADCAST
+// #define SINGLE_SENSOR_BROADCAST
 
 /* ── Sensor types ────────────────────────────────────────────────── */
 #define SENSOR_TYPE_L0X  0      /* VL53L0X (8-bit registers, ~120cm range) */

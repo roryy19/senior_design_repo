@@ -5,6 +5,7 @@ import { Stack } from "expo-router";
 import type { UserDimensions } from "../src/domain/types";
 import { loadUserDimensions, saveUserDimensions } from "../src/storage/registry";
 import { useFontSize } from "../src/context/FontSizeContext";
+import { useBle } from "../src/context/BleContext";
 
 // Conversion helpers
 function cmToFeetInches(cm: number): { feet: number; inches: number } {
@@ -24,17 +25,12 @@ export default function UserSetupScreen() {
   const [isEditing, setIsEditing] = useState(false);
   const [useMetric, setUseMetric] = useState(false);
   const { fontScale } = useFontSize();
+  const { sendArmLength } = useBle();
 
-  // Metric inputs
-  const [heightCmInput, setHeightCmInput] = useState("");
-  const [beltCmInput, setBeltCmInput] = useState("");
+  // Metric input
   const [shoulderCmInput, setShoulderCmInput] = useState("");
 
   // Imperial inputs
-  const [heightFtInput, setHeightFtInput] = useState("");
-  const [heightInInput, setHeightInInput] = useState("");
-  const [beltFtInput, setBeltFtInput] = useState("");
-  const [beltInInput, setBeltInInput] = useState("");
   const [shoulderFtInput, setShoulderFtInput] = useState("");
   const [shoulderInInput, setShoulderInInput] = useState("");
 
@@ -53,17 +49,9 @@ export default function UserSetupScreen() {
   function startEdit() {
     if (dimensions) {
       if (useMetric) {
-        setHeightCmInput(String(Math.round(dimensions.heightCm)));
-        setBeltCmInput(String(Math.round(dimensions.groundToBeltCm)));
         setShoulderCmInput(String(Math.round(dimensions.shoulderToFingertipCm)));
       } else {
-        const h = cmToFeetInches(dimensions.heightCm);
-        const b = cmToFeetInches(dimensions.groundToBeltCm);
         const s = cmToFeetInches(dimensions.shoulderToFingertipCm);
-        setHeightFtInput(String(h.feet));
-        setHeightInInput(String(h.inches));
-        setBeltFtInput(String(b.feet));
-        setBeltInInput(String(b.inches));
         setShoulderFtInput(String(s.feet));
         setShoulderInInput(String(s.inches));
       }
@@ -73,13 +61,7 @@ export default function UserSetupScreen() {
 
   // Clear all inputs
   function clearInputs() {
-    setHeightCmInput("");
-    setBeltCmInput("");
     setShoulderCmInput("");
-    setHeightFtInput("");
-    setHeightInInput("");
-    setBeltFtInput("");
-    setBeltInInput("");
     setShoulderFtInput("");
     setShoulderInInput("");
   }
@@ -94,46 +76,29 @@ export default function UserSetupScreen() {
 
   // Save dimensions
   async function saveDimensions() {
-    let heightCm: number;
-    let groundToBeltCm: number;
     let shoulderToFingertipCm: number;
 
     if (useMetric) {
-      heightCm = parseFloat(heightCmInput) || 0;
-      groundToBeltCm = parseFloat(beltCmInput) || 0;
       shoulderToFingertipCm = parseFloat(shoulderCmInput) || 0;
     } else {
-      const hFt = parseFloat(heightFtInput) || 0;
-      const hIn = parseFloat(heightInInput) || 0;
-      const bFt = parseFloat(beltFtInput) || 0;
-      const bIn = parseFloat(beltInInput) || 0;
       const sFt = parseFloat(shoulderFtInput) || 0;
       const sIn = parseFloat(shoulderInInput) || 0;
-      heightCm = feetInchesToCm(hFt, hIn);
-      groundToBeltCm = feetInchesToCm(bFt, bIn);
       shoulderToFingertipCm = feetInchesToCm(sFt, sIn);
     }
 
-    if (heightCm <= 0 || groundToBeltCm <= 0 || shoulderToFingertipCm <= 0) {
-      Alert.alert("Invalid Input", "Please enter valid values for all fields.");
+    if (shoulderToFingertipCm <= 0) {
+      Alert.alert("Invalid Input", "Please enter a valid shoulder-to-fingertip length.");
       return;
     }
 
-    if (groundToBeltCm >= heightCm) {
-      Alert.alert("Invalid Input", "Ground to belt must be less than total height.");
-      return;
-    }
-
-    const newDimensions: UserDimensions = {
-      heightCm,
-      groundToBeltCm,
-      beltToHeadCm: heightCm - groundToBeltCm,
-      shoulderToFingertipCm,
-    };
+    const newDimensions: UserDimensions = { shoulderToFingertipCm };
 
     await saveUserDimensions(newDimensions);
     setDimensions(newDimensions);
     setIsEditing(false);
+
+    // Push live to belt (silently no-ops if disconnected; on-connect sync will resend)
+    sendArmLength(Math.round(shoulderToFingertipCm));
   }
 
   // Format display value based on unit
@@ -186,8 +151,8 @@ export default function UserSetupScreen() {
       {/* Helper text */}
       <Text style={{ opacity: 0.6, fontSize: 14 * fontScale }}>
         {useMetric
-          ? "Enter values in centimeters (cm)"
-          : "Enter values in feet and inches"}
+          ? "Enter value in centimeters (cm)"
+          : "Enter value in feet and inches"}
       </Text>
 
       {/* Dimension Card (locked state) or Inputs (editing state) */}
@@ -204,15 +169,6 @@ export default function UserSetupScreen() {
           <Text style={{ fontSize: 18 * fontScale, fontWeight: "600" }}>Your Dimensions</Text>
 
           <View style={{ gap: 4 }}>
-            <Text style={{ fontSize: 16 * fontScale }}>
-              Height: {formatValue(dimensions.heightCm)}
-            </Text>
-            <Text style={{ fontSize: 16 * fontScale }}>
-              Ground to Belt: {formatValue(dimensions.groundToBeltCm)}
-            </Text>
-            <Text style={{ fontSize: 16 * fontScale, opacity: 0.7 }}>
-              Belt to Head: {formatValue(dimensions.beltToHeadCm)}
-            </Text>
             <Text style={{ fontSize: 16 * fontScale }}>
               Shoulder to Fingertip: {formatValue(dimensions.shoulderToFingertipCm)}
             </Text>
@@ -243,114 +199,6 @@ export default function UserSetupScreen() {
           }}
         >
           <Text style={{ fontSize: 18 * fontScale, fontWeight: "600" }}>Enter Your Dimensions</Text>
-
-          {/* Height Input */}
-          <View style={{ gap: 4 }}>
-            <Text style={{ fontSize: 14 * fontScale, opacity: 0.7 }}>Height</Text>
-            {useMetric ? (
-              <TextInput
-                value={heightCmInput}
-                onChangeText={setHeightCmInput}
-                placeholder="Height in cm (e.g., 175)"
-                placeholderTextColor="#999"
-                keyboardType="numeric"
-                style={{
-                  borderWidth: 1,
-                  borderColor: "#ddd",
-                  borderRadius: 10,
-                  padding: 12,
-                  fontSize: 16 * fontScale,
-                }}
-              />
-            ) : (
-              <View style={{ flexDirection: "row", gap: 8 }}>
-                <TextInput
-                  value={heightFtInput}
-                  onChangeText={setHeightFtInput}
-                  placeholder="Feet (e.g., 5)"
-                  placeholderTextColor="#999"
-                  keyboardType="numeric"
-                  style={{
-                    flex: 1,
-                    borderWidth: 1,
-                    borderColor: "#ddd",
-                    borderRadius: 10,
-                    padding: 12,
-                    fontSize: 16 * fontScale,
-                  }}
-                />
-                <TextInput
-                  value={heightInInput}
-                  onChangeText={setHeightInInput}
-                  placeholder="Inches (e.g., 9)"
-                  placeholderTextColor="#999"
-                  keyboardType="numeric"
-                  style={{
-                    flex: 1,
-                    borderWidth: 1,
-                    borderColor: "#ddd",
-                    borderRadius: 10,
-                    padding: 12,
-                    fontSize: 16 * fontScale,
-                  }}
-                />
-              </View>
-            )}
-          </View>
-
-          {/* Ground to Belt Input */}
-          <View style={{ gap: 4 }}>
-            <Text style={{ fontSize: 14 * fontScale, opacity: 0.7 }}>Ground to Belt</Text>
-            {useMetric ? (
-              <TextInput
-                value={beltCmInput}
-                onChangeText={setBeltCmInput}
-                placeholder="Ground to belt in cm (e.g., 100)"
-                placeholderTextColor="#999"
-                keyboardType="numeric"
-                style={{
-                  borderWidth: 1,
-                  borderColor: "#ddd",
-                  borderRadius: 10,
-                  padding: 12,
-                  fontSize: 16 * fontScale,
-                }}
-              />
-            ) : (
-              <View style={{ flexDirection: "row", gap: 8 }}>
-                <TextInput
-                  value={beltFtInput}
-                  onChangeText={setBeltFtInput}
-                  placeholder="Feet (e.g., 3)"
-                  placeholderTextColor="#999"
-                  keyboardType="numeric"
-                  style={{
-                    flex: 1,
-                    borderWidth: 1,
-                    borderColor: "#ddd",
-                    borderRadius: 10,
-                    padding: 12,
-                    fontSize: 16 * fontScale,
-                  }}
-                />
-                <TextInput
-                  value={beltInInput}
-                  onChangeText={setBeltInInput}
-                  placeholder="Inches (e.g., 3)"
-                  placeholderTextColor="#999"
-                  keyboardType="numeric"
-                  style={{
-                    flex: 1,
-                    borderWidth: 1,
-                    borderColor: "#ddd",
-                    borderRadius: 10,
-                    padding: 12,
-                    fontSize: 16 * fontScale,
-                  }}
-                />
-              </View>
-            )}
-          </View>
 
           {/* Shoulder to Fingertip Input */}
           <View style={{ gap: 4 }}>
