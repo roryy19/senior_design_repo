@@ -138,12 +138,70 @@ static bool s_sensor_ready = false;
 /* How many sensors initialized — used for single-sensor test mode */
 static int s_active_count = 0;
 
+/* Bus handle — stored at file scope so recovery can call bus reset */
+static i2c_master_bus_handle_t s_bus;
+
+/* Recovery: detect I2C bus stuck, retry when no sensors active */
+#define MAX_ERROR_TICKS       5    /* 5 × 50ms = 250ms of errors → recovery */
+#define RETRY_INTERVAL_TICKS  40   /* 40 × 50ms = 2s between retry attempts */
+#define STALE_SENSOR_TICKS    20   /* 20 × 50ms = 1s no reading → clear distance */
+static int s_error_ticks = 0;
+static int s_retry_counter = 0;
+static uint8_t s_stale_ticks[NUM_ACTIVE_SENSORS];
+
 /* Persistent distance array for all 12 pipeline slots */
 static float s_distances_cm[PIPELINE_TOTAL_SENSORS];
 
 /* Previous motor levels — only log when they change */
 static uint8_t s_prev_motor_levels[PIPELINE_NUM_MOTORS];
 static bool s_first_reading = true;
+
+/* ── I2C recovery ────────────────────────────────────────────────── */
+static void sensor_recover(void)
+{
+    ESP_LOGW(TAG, "I2C recovery: resetting bus, re-initializing sensors...");
+
+    /* Kill motors immediately — don't vibrate while sensors are offline */
+    uint8_t zeros[PIPELINE_SHIFT_REG_BYTES] = {0};
+    shift_register_send(zeros, PIPELINE_SHIFT_REG_BYTES);
+    memset(s_prev_motor_levels, 0, sizeof(s_prev_motor_levels));
+    s_first_reading = true;
+
+    esp_err_t rc = i2c_master_bus_reset(s_bus);
+    if (rc != ESP_OK) {
+        ESP_LOGE(TAG, "Bus reset failed: %s", esp_err_to_name(rc));
+    }
+    vTaskDelay(pdMS_TO_TICKS(50));
+
+    pca9548a_disable_all();
+    vTaskDelay(pdMS_TO_TICKS(10));
+
+    int ok_count = 0;
+    for (int i = 0; i < NUM_ACTIVE_SENSORS; i++) {
+        pca9548a_select(s_sensors[i].mux_addr, s_sensors[i].mux_channel);
+        vTaskDelay(pdMS_TO_TICKS(10));
+
+        bool init_ok = false;
+        if (s_sensors[i].sensor_type == SENSOR_TYPE_L1X) {
+            if (vl53l1x_sensor_init() == VL53L1X_OK &&
+                vl53l1x_start_ranging() == VL53L1X_OK) {
+                init_ok = true;
+            }
+        } else {
+            if (vl53l0x_sensor_init() == VL53L0X_OK &&
+                vl53l0x_start_ranging() == VL53L0X_OK) {
+                init_ok = true;
+            }
+        }
+
+        s_sensors[i].ok = init_ok;
+        if (init_ok) ok_count++;
+    }
+
+    s_active_count = ok_count;
+    memset(s_stale_ticks, 0, sizeof(s_stale_ticks));
+    ESP_LOGI(TAG, "Recovery: %d/%d sensors restored", ok_count, NUM_ACTIVE_SENSORS);
+}
 
 /* ── The FreeRTOS task function ───────────────────────────────────── */
 static void sensor_task(void *param)
@@ -158,12 +216,38 @@ static void sensor_task(void *param)
 #endif
 
     while (1) {
+        /* ── No sensors active? Periodically retry initialization ── */
+        if (s_active_count == 0) {
+            if (++s_retry_counter >= RETRY_INTERVAL_TICKS) {
+                s_retry_counter = 0;
+                sensor_recover();
+            }
+            vTaskDelay(pdMS_TO_TICKS(50));
+            continue;
+        }
+
         /* ── Step 1: Read each sensor via its mux channel ──────────── */
+        int read_errors = 0;
+        int consecutive_mux_fails = 0;
+
         for (int i = 0; i < NUM_ACTIVE_SENSORS; i++) {
             if (!s_sensors[i].ok) continue;
 
             /* Select this sensor's mux channel (disables the other mux) */
-            pca9548a_select(s_sensors[i].mux_addr, s_sensors[i].mux_channel);
+            esp_err_t mux_rc = pca9548a_select(s_sensors[i].mux_addr,
+                                                s_sensors[i].mux_channel);
+            if (mux_rc != ESP_OK) {
+                read_errors++;
+                /* Early exit: 3 consecutive mux fails → bus is stuck,
+                 * don't waste time on remaining sensors (avoids up to
+                 * 12 × 200ms I2C timeouts on a hung bus). */
+                if (++consecutive_mux_fails >= 3) {
+                    read_errors = s_active_count;
+                    break;
+                }
+                continue;
+            }
+            consecutive_mux_fails = 0;
 
             /* Check if this sensor has a new measurement ready.
              * Use the appropriate driver based on sensor type. */
@@ -175,6 +259,7 @@ static void sensor_task(void *param)
             }
 
             if (ready) {
+                s_stale_ticks[i] = 0;
                 uint16_t distance_mm = 0;
                 uint8_t range_status = 0;
 
@@ -196,7 +281,32 @@ static void sensor_task(void *param)
                     /* Invalid reading — treat as "no obstacle" */
                     s_distances_cm[s_sensors[i].sensor_index] = 999.0f;
                 }
+            } else if (s_stale_ticks[i] < STALE_SENSOR_TICKS) {
+                /* Sensor alive but no new data yet — normal at 50ms poll.
+                 * After 1s with no reading, clear distance to prevent
+                 * phantom vibration from a dead sensor. */
+                if (++s_stale_ticks[i] >= STALE_SENSOR_TICKS) {
+                    s_distances_cm[s_sensors[i].sensor_index] = 999.0f;
+                }
             }
+        }
+
+        /* ── Error tracking ─────────────────────────────────────── */
+        if (read_errors > 0) {
+            s_error_ticks++;
+            /* Full outage (all fail): fast recovery at 250ms.
+             * Partial outage (one mux dead): slower recovery at 1s. */
+            int threshold = (read_errors >= s_active_count)
+                            ? MAX_ERROR_TICKS
+                            : (MAX_ERROR_TICKS * 4);
+            if (s_error_ticks >= threshold) {
+                sensor_recover();
+                s_error_ticks = 0;
+                vTaskDelay(pdMS_TO_TICKS(50));
+                continue;
+            }
+        } else {
+            s_error_ticks = 0;
         }
 
         /* ── Step 1.5: Single-sensor broadcast mode (optional) ──────── *
@@ -273,7 +383,6 @@ bool sensor_task_init(void)
     memset(s_prev_motor_levels, 0, sizeof(s_prev_motor_levels));
 
     /* ── Step 1: Create the I2C bus ──────────────────────────────── */
-    i2c_master_bus_handle_t bus;
     i2c_master_bus_config_t bus_cfg = {
         .i2c_port = I2C_NUM_0,
         .sda_io_num = I2C_SDA_PIN,
@@ -283,7 +392,7 @@ bool sensor_task_init(void)
         .flags.enable_internal_pullup = true,
     };
 
-    esp_err_t rc = i2c_new_master_bus(&bus_cfg, &bus);
+    esp_err_t rc = i2c_new_master_bus(&bus_cfg, &s_bus);
     if (rc != ESP_OK) {
         ESP_LOGE(TAG, "Failed to create I2C bus: %s", esp_err_to_name(rc));
         return false;
@@ -292,10 +401,9 @@ bool sensor_task_init(void)
              I2C_SDA_PIN, I2C_SCL_PIN, I2C_FREQ_HZ / 1000);
 
     /* ── Step 2: Initialize both PCA9548A multiplexers ───────────── */
-    rc = pca9548a_init(bus);
+    rc = pca9548a_init(s_bus);
     if (rc != ESP_OK) {
-        ESP_LOGE(TAG, "Mux init failed — cannot reach sensors");
-        return false;
+        ESP_LOGW(TAG, "Mux init failed — will retry in sensor loop");
     }
 
     /* ── Step 3: Create shared I2C device handle at 0x29 ─────────── *
@@ -309,7 +417,7 @@ bool sensor_task_init(void)
         .scl_speed_hz = I2C_FREQ_HZ,
     };
 
-    rc = i2c_master_bus_add_device(bus, &dev_cfg, &sensor_dev);
+    rc = i2c_master_bus_add_device(s_bus, &dev_cfg, &sensor_dev);
     if (rc != ESP_OK) {
         ESP_LOGE(TAG, "Failed to add sensor device to I2C bus: %s",
                  esp_err_to_name(rc));
@@ -363,25 +471,17 @@ bool sensor_task_init(void)
     }
 
     s_active_count = ok_count;
-    s_sensor_ready = (ok_count > 0);
-    if (s_sensor_ready) {
+    s_sensor_ready = true;
+    if (ok_count > 0) {
         ESP_LOGI(TAG, "%d/%d sensors ready (%d L1X, %d L0X)",
                  ok_count, NUM_ACTIVE_SENSORS, l1x_count, l0x_count);
     } else {
-        ESP_LOGE(TAG, "No sensors initialized — task will not start");
+        ESP_LOGW(TAG, "0 sensors ready — task will retry periodically");
     }
-    return s_sensor_ready;
+    return true;
 }
 
 void sensor_task_start(void)
 {
-    if (!s_sensor_ready) {
-        ESP_LOGW(TAG, "Sensors not initialized — skipping task creation");
-        return;
-    }
-
-    /* Create the FreeRTOS task.
-     * - Stack: 4096 bytes (sensor reads + pipeline + logging)
-     * - Priority: 5 (higher than beacon scanner at 3) */
     xTaskCreate(sensor_task, "sensor", 4096, NULL, 5, NULL);
 }

@@ -70,7 +70,7 @@ def fig1_localization():
     ax2.legend()
     ax2.grid(True, alpha=0.3)
 
-    fig.suptitle("Metric 1: Angular Localization Error", fontsize=13, fontweight="bold")
+    fig.suptitle("Angular Localization Error", fontsize=13, fontweight="bold")
     save(fig, "fig_01_localization.png")
 
 
@@ -100,7 +100,7 @@ def fig2_coverage():
     ax.set_ylabel("Coverage (%)")
     ax.set_xlabel("Obstacle distance")
     ax.set_ylim(0, 115)
-    ax.set_title("Metric 2: 360-degree Coverage vs Distance\n"
+    ax.set_title("360-degree Coverage vs Distance\n"
                  "(fraction of angles producing >= 1 motor response)",
                  fontweight="bold")
     ax.axhline(100, ls="--", c="k", alpha=0.4)
@@ -146,7 +146,7 @@ def fig3_motor_count():
     ax2.set_xticks(range(0, 9))
     ax2.grid(True, axis="y", alpha=0.3)
 
-    fig.suptitle("Metric 3: Motors Activated per Single Obstacle (@ 50 cm)",
+    fig.suptitle("Motors Activated per Single Obstacle (@ 50 cm)",
                  fontsize=13, fontweight="bold")
     save(fig, "fig_03_motor_count.png")
 
@@ -171,7 +171,7 @@ def fig4_monotonicity():
     ax.set_xlim(0, 130)
     ax.set_ylim(-0.3, 7.5)
     ax.set_yticks(range(0, 8))
-    ax.set_title("Metric 4: Distance -> Vibration Level (monotonic, 100% pass)",
+    ax.set_title("Distance -> Vibration Level (monotonic, 100% pass)",
                  fontweight="bold")
     ax.legend()
     ax.grid(True, alpha=0.3)
@@ -215,7 +215,7 @@ def fig5_linearity():
 
     ax.set_xlabel("User arm length (cm)")
     ax.set_ylabel("Threshold transition distance (cm)")
-    ax.set_title(f"Metric 5: Arm-Length Scaling Linearity\n"
+    ax.set_title(f"Arm-Length Scaling Linearity\n"
                  f"mean R^2 = {np.mean(r2_vals):.4f}",
                  fontweight="bold")
     ax.legend(loc="upper left", fontsize=9)
@@ -258,7 +258,7 @@ def fig6_latency():
                  ha="center", va="bottom", fontsize=10)
     ax2.grid(True, axis="y", alpha=0.3)
 
-    fig.suptitle("Metric 6: Pipeline Latency (100k iterations, random inputs)",
+    fig.suptitle("Pipeline Latency (100k iterations, random inputs)",
                  fontsize=13, fontweight="bold")
     save(fig, "fig_06_latency.png")
 
@@ -284,7 +284,7 @@ def fig7_discrimination():
     ax.set_yticks([0, 1])
     ax.set_yticklabels(["no", "yes"])
     ax.set_xlim(0, 180)
-    ax.set_title("Metric 7: Multi-Obstacle Discrimination\n"
+    ax.set_title("Multi-Obstacle Discrimination\n"
                  "(both obstacles @ 30 cm, sep 0..180 deg)",
                  fontweight="bold")
     ax.legend(loc="lower right")
@@ -300,27 +300,6 @@ def fig8_summary():
     fig, ax = plt.subplots(figsize=(11, 7))
     ax.axis("off")
 
-    # Parse Monte Carlo totals from metrics_summary.txt
-    # (CSV is subsampled: first 200 + failures, so it undercounts N)
-    total, passing, mc_pct = 10000, 10000, 100.0
-    try:
-        with open(os.path.join(HERE, "metrics_summary.txt")) as f:
-            in_section = False
-            for line in f:
-                if "[8] Monte Carlo" in line:
-                    in_section = True
-                    continue
-                if in_section:
-                    if "runs" in line and ":" in line:
-                        total = int(line.split(":")[1].strip())
-                    elif "passing" in line and ":" in line:
-                        passing = int(line.split(":")[1].strip())
-                    elif "pass rate" in line and ":" in line:
-                        mc_pct = float(line.split(":")[1].strip().replace("%", ""))
-                        break
-    except (FileNotFoundError, ValueError):
-        pass
-
     # Load headline values from other CSVs
     _, loc_rows = load_csv("metric1_localization.csv")
     loc_err = np.array([float(r[2]) for r in loc_rows])
@@ -328,40 +307,28 @@ def fig8_summary():
     _, mc_rows = load_csv("metric3_motor_count.csv")
     mc_counts = np.array([int(r[1]) for r in mc_rows])
 
-    _, lat_rows = load_csv("metric6_latency.csv")
-    lat_us = np.array([float(r[1]) for r in lat_rows])
-
-    _, disc_rows = load_csv("metric7_discrimination.csv")
-    disc_sep = np.array([int(r[0]) for r in disc_rows])
-    disc_ok = np.array([int(r[1]) for r in disc_rows])
-    min_sep = int(disc_sep[np.where(disc_ok == 1)[0][0]]) if np.any(disc_ok == 1) else -1
-
     headline = [
         ("1", "Angular localization error",
          f"{loc_err.mean():.2f} deg mean  /  {loc_err.max():.2f} deg max"),
-        ("2", "360-deg coverage (10-85 cm)", "100 %  (0 dead zones)"),
-        ("3", "Motors per obstacle", f"{mc_counts.mean():.2f} avg  (range {mc_counts.min()}-{mc_counts.max()})"),
-        ("4", "Distance monotonicity", "100 %  (1560 / 1560 samples)"),
-        ("5", "Arm-length linearity R^2", "0.9971 mean"),
-        ("6", "Pipeline latency",
-         f"{lat_us.mean():.3f} us mean  ({50000/lat_us.mean():.0f}x headroom vs 50 ms)"),
-        ("7", "Multi-obstacle min separation", f"{min_sep} deg"),
-        ("8", "Monte Carlo robustness", f"{mc_pct:.2f} %  ({passing} / {total} runs)"),
+        ("2", "Motors per obstacle", f"{mc_counts.mean():.2f} avg  (range {mc_counts.min()}-{mc_counts.max()})"),
+        ("3", "Distance monotonicity", "100 %  (1560 / 1560 samples)"),
+        ("4", "Arm-length linearity R^2", "0.9971 mean"),
+        ("5", "Beacon RSSI vs distance (log fit)", "R^2 = 0.9721"),
     ]
 
     ax.text(0.5, 0.97, "Sensor-to-Motor Pipeline -- Headline Metrics",
             ha="center", fontsize=15, fontweight="bold",
             transform=ax.transAxes)
 
-    y = 0.88
+    y = 0.82
     for num, label, value in headline:
-        ax.text(0.02, y, f"[{num}]", fontsize=11, fontweight="bold",
+        ax.text(0.02, y, f"[{num}]", fontsize=13, fontweight="bold",
                 transform=ax.transAxes, family="monospace")
-        ax.text(0.08, y, label, fontsize=11, transform=ax.transAxes)
-        ax.text(0.55, y, value, fontsize=11, fontweight="bold",
+        ax.text(0.09, y, label, fontsize=13, transform=ax.transAxes)
+        ax.text(0.55, y, value, fontsize=13, fontweight="bold",
                 color="tab:blue", transform=ax.transAxes,
                 family="monospace")
-        y -= 0.10
+        y -= 0.14
 
     ax.text(0.5, 0.02,
             "All metrics computed against the real core library "

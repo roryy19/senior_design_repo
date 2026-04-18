@@ -553,6 +553,106 @@ void app_main(void)
     //     while (1) { vTaskDelay(pdMS_TO_TICKS(1000)); }
     // }    
 
+
+    /* TEST 4.1: Walk motor 1 through levels 1..7, each for 2 seconds.
+     *
+     * Motor 1 = byte[0] bits 4-2. Uses the packer's natural byte
+     * layout (shift_register_send now reverses the stream internally
+     * to match the physical wiring).
+     *
+     *   level 1 = 0x04, level 2 = 0x08, level 3 = 0x0C,
+     *   level 4 = 0x10, level 5 = 0x14, level 6 = 0x18,
+     *   level 7 = 0x1C
+     */
+
+    {
+        // const uint8_t patterns[8][3] = {
+        //     {0x04, 0x00, 0x00}, // level 1
+        //     {0x08, 0x00, 0x00}, // level 2
+        //     {0x0C, 0x00, 0x00}, // level 3
+        //     {0x10, 0x00, 0x00}, // level 4
+        //     {0x14, 0x00, 0x00}, // level 5
+        //     {0x18, 0x00, 0x00}, // level 6
+        //     {0x1C, 0x00, 0x00}, // level 7
+        //     {0x00, 0x00, 0x00}, // all off
+        // };
+        // for (int lvl = 0; lvl < 8; lvl++) {
+        //     ESP_LOGI(TAG, "TEST 4: motor 1 at level %d", lvl + 1);
+        //     shift_register_send(patterns[lvl], 3);
+        //     vTaskDelay(pdMS_TO_TICKS(7000));
+        // }
+        // shift_register_clear();
+        // ESP_LOGI(TAG, "TEST 4: motor 1 OFF");
+        // /* Stay here — don't let sensor_task overwrite the shift registers */
+        // while (1) { vTaskDelay(pdMS_TO_TICKS(1000)); }
+    }
+
+    /* TEST 4.2: Walk ALL 8 motors through levels 1..7, each for 1 second.
+     *
+     * Every motor gets the same 3-bit level simultaneously. The 24-bit
+     * stream is that level repeated 8 times (once per motor).
+     *
+     *   level 1 (001 × 8) = 0x24 0x92 0x49
+     *   level 2 (010 × 8) = 0x49 0x24 0x92
+     *   level 3 (011 × 8) = 0x6D 0xB6 0xDB
+     *   level 4 (100 × 8) = 0x92 0x49 0x24
+     *   level 5 (101 × 8) = 0xB6 0xDB 0x6D
+     *   level 6 (110 × 8) = 0xDB 0x6D 0xB6
+     *   level 7 (111 × 8) = 0xFF 0xFF 0xFF
+     */
+    {
+        const uint8_t patterns[7][3] = {
+            {0x24, 0x92, 0x49}, // level 1
+            {0x49, 0x24, 0x92}, // level 2
+            {0x6D, 0xB6, 0xDB}, // level 3
+            {0x92, 0x49, 0x24}, // level 4
+            {0xB6, 0xDB, 0x6D}, // level 5
+            {0xDB, 0x6D, 0xB6}, // level 6
+            {0xFF, 0xFF, 0xFF}, // level 7
+        };
+        for (int lvl = 0; lvl < 7; lvl++) {
+            ESP_LOGI(TAG, "TEST 4.2: all motors at level %d", lvl + 1);
+            shift_register_send(patterns[lvl], 3);
+            vTaskDelay(pdMS_TO_TICKS(1000));
+        }
+        shift_register_clear();
+        ESP_LOGI(TAG, "TEST 4.2: all motors OFF");
+    }
+
+    /* TEST 4.3: Walk motor 3 through levels 1..7, each for 1 second.
+     *
+     * Motor 3 = byte[1] bits 6-4. 24-bit value = level << 12.
+     *
+     *   level 1 = {0x00, 0x10, 0x00}
+     *   level 2 = {0x00, 0x20, 0x00}
+     *   level 3 = {0x00, 0x30, 0x00}
+     *   level 4 = {0x00, 0x40, 0x00}
+     *   level 5 = {0x00, 0x50, 0x00}
+     *   level 6 = {0x00, 0x60, 0x00}
+     *   level 7 = {0x00, 0x70, 0x00}
+     *
+     * See firmware/motor_bit_patterns.md for all 8 motors.
+     */
+    // {
+    //     const uint8_t patterns[7][3] = {
+    //         {0x00, 0x10, 0x00}, // level 1
+    //         {0x00, 0x20, 0x00}, // level 2
+    //         {0x00, 0x30, 0x00}, // level 3
+    //         {0x00, 0x40, 0x00}, // level 4
+    //         {0x00, 0x50, 0x00}, // level 5
+    //         {0x00, 0x60, 0x00}, // level 6
+    //         {0x00, 0x70, 0x00}, // level 7
+    //     };
+    //     for (int lvl = 0; lvl < 7; lvl++) {
+    //         ESP_LOGI(TAG, "TEST 4.3: motor 3 at level %d", lvl + 1);
+    //         shift_register_send(patterns[lvl], 3);
+    //         vTaskDelay(pdMS_TO_TICKS(1000));
+    //     }
+    //     shift_register_clear();
+    //     ESP_LOGI(TAG, "TEST 4.3: motor 3 OFF");
+    // }
+
+
     // test for just one motor value
     // {
     //     uint8_t pattern[3] = {0xE0, 0x00, 0x00}; // motor 0 at level 7
