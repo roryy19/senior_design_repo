@@ -313,7 +313,7 @@ def fig8_summary():
         ("2", "Motors per obstacle", f"{mc_counts.mean():.2f} avg  (range {mc_counts.min()}-{mc_counts.max()})"),
         ("3", "Distance monotonicity", "100 %  (1560 / 1560 samples)"),
         ("4", "Arm-length linearity R^2", "0.9971 mean"),
-        ("5", "Beacon RSSI vs distance (log fit)", "R^2 = 0.9721"),
+        ("5", "Beacon RSSI vs distance (log fit)", "R^2 = 0.9718"),
     ]
 
     ax.text(0.5, 0.97, "Sensor-to-Motor Pipeline -- Headline Metrics",

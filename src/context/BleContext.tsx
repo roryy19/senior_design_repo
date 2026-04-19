@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
-import { AppState } from 'react-native';
+import { Alert, AppState } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { bleService, AlertPayload, BleConnectionState } from '../ble/BleService';
 import { loadSensors, loadUserDimensions, loadRssiThreshold } from '../storage/registry';
@@ -101,6 +101,17 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
       // RSSI updates just refresh the signal map — no banner, no notification.
       if (payload.type === 'rssi_update') {
         setBeaconRssi((prev) => ({ ...prev, [payload.mac]: payload.rssi }));
+        return;
+      }
+
+      // Battery-low: blocking dismissible popup.
+      if (payload.type === 'battery_low') {
+        Alert.alert(
+          'Battery Low',
+          'Belt battery is low. Please charge soon.',
+          [{ text: 'OK' }],
+          { cancelable: false }
+        );
         return;
       }
 

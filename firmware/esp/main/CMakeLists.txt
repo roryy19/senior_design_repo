@@ -8,6 +8,7 @@ idf_component_register(
          "sensor_task.c"
          "shift_register.c"
          "pca9548a.c"
+         "battery_monitor.c"
          "distance_categorizer_wrapper.cpp"
          "pipeline_wrapper.cpp"
          "../../src/core/distance_categorizer.cpp"
@@ -16,4 +17,5 @@ idf_component_register(
          "../../src/core/pipeline.cpp"
     INCLUDE_DIRS "."
                  "../../src/core"
+    REQUIRES nvs_flash spiffs bt driver esp_driver_i2s esp_adc
 )

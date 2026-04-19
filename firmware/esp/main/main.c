@@ -32,11 +32,14 @@
 #include "sensor_task.h"
 #include "shift_register.h"
 #include "pipeline_wrapper.h"
+#include "battery_monitor.h"
 
 static const char *TAG = "BELT_BLE";
 
-/* GPIO pin for audio PWM output (connect to RC filter -> LM386 input) */
-#define AUDIO_GPIO GPIO_NUM_7
+/* I2S audio output to MAX98357A */
+#define AUDIO_BCLK_GPIO GPIO_NUM_5
+#define AUDIO_LRC_GPIO  GPIO_NUM_6
+#define AUDIO_DIN_GPIO  GPIO_NUM_7
 
 /* ---------- UUIDs (must match src/ble/uuids.ts in the phone app) ----------
  *
@@ -104,6 +107,25 @@ static void send_beacon_alert(const uint8_t *mac_le)
                  alert[1], alert[2], alert[3], alert[4], alert[5], alert[6]);
     } else {
         ESP_LOGW(TAG, "Failed to send beacon alert, rc=%d", rc);
+    }
+}
+
+/* ---------- Send battery-low alert to phone ---------- */
+
+/* Called by battery_monitor when ADC reading crosses the alert threshold.
+ * Packet: [0x04] (length 1). Phone shows a dismissible popup. */
+void send_battery_alert(void)
+{
+    if (!connected || !notify_enabled) return;
+
+    uint8_t pkt[1] = {0x04};
+    struct os_mbuf *om = ble_hs_mbuf_from_flat(pkt, sizeof(pkt));
+    int rc = ble_gatts_notify_custom(conn_handle, alert_attr_handle, om);
+
+    if (rc == 0) {
+        ESP_LOGW(TAG, "Sent battery-low alert to phone");
+    } else {
+        ESP_LOGW(TAG, "Failed to send battery-low alert, rc=%d", rc);
     }
 }
 
@@ -451,8 +473,8 @@ void app_main(void)
     /* Initialize audio clip storage (SPIFFS) */
     clip_storage_init();
 
-    /* Initialize audio player (PWM output) */
-    audio_player_init(AUDIO_GPIO);
+    /* Initialize audio player (I2S → MAX98357A) */
+    audio_player_init(AUDIO_BCLK_GPIO, AUDIO_LRC_GPIO, AUDIO_DIN_GPIO);
 
     /* Initialize distance sensor (I2C bus + VL53L1X boot sequence) */
     sensor_task_init();
@@ -482,18 +504,25 @@ void app_main(void)
     }
     */
 
-    /* TEST 2: Motor 0 at level 7 — quick single-motor verify.
+    /* TEST 2: Motor X at level 7 — quick single-motor verify.
      * Motor 0 = byte[0] bits 7-5, level 7 = 0xE0.
      * Holds forever — uncomment to test, comment out after.
      */
-    /*
-    {
-        uint8_t pattern[3] = {0xE0, 0x00, 0x00};
-        shift_register_send(pattern, 3);
-        ESP_LOGI(TAG, "TEST 2: motor 0 at level 7 — holding forever");
-        while (1) { vTaskDelay(pdMS_TO_TICKS(1000)); }
-    }
-    */
+    
+    // {
+    //     uint8_t pattern[3] = {0x00, 0x00, 0x01};
+
+    //     for (int lvl = 0; lvl < 1; lvl++) {
+    //         ESP_LOGI(TAG, "TEST 2: motor X at level %d", lvl + 1);
+    //         shift_register_send(pattern, 3);
+    //         vTaskDelay(pdMS_TO_TICKS(5000));
+    //     }
+    //     shift_register_clear();
+    //     ESP_LOGI(TAG, "TEST 2: motor X OFF");
+    //     /* Stay here — don't let sensor_task overwrite the shift registers */
+    //     while (1) { vTaskDelay(pdMS_TO_TICKS(1000)); }
+    // }
+    
 
     /* TEST 3: Walking motor pattern — each motor at level 7 for 1 second.
      * Motors should activate in order 0→7 around the belt.
@@ -554,7 +583,7 @@ void app_main(void)
     // }    
 
 
-    /* TEST 4.1: Walk motor 1 through levels 1..7, each for 2 seconds.
+    /* TEST 4.1: Walk motor X through levels 1..7, each for 2 seconds.
      *
      * Motor 1 = byte[0] bits 4-2. Uses the packer's natural byte
      * layout (shift_register_send now reverses the stream internally
@@ -566,25 +595,25 @@ void app_main(void)
      */
 
     {
-        // const uint8_t patterns[8][3] = {
-        //     {0x04, 0x00, 0x00}, // level 1
-        //     {0x08, 0x00, 0x00}, // level 2
-        //     {0x0C, 0x00, 0x00}, // level 3
-        //     {0x10, 0x00, 0x00}, // level 4
-        //     {0x14, 0x00, 0x00}, // level 5
-        //     {0x18, 0x00, 0x00}, // level 6
-        //     {0x1C, 0x00, 0x00}, // level 7
-        //     {0x00, 0x00, 0x00}, // all off
-        // };
-        // for (int lvl = 0; lvl < 8; lvl++) {
-        //     ESP_LOGI(TAG, "TEST 4: motor 1 at level %d", lvl + 1);
-        //     shift_register_send(patterns[lvl], 3);
-        //     vTaskDelay(pdMS_TO_TICKS(7000));
-        // }
-        // shift_register_clear();
-        // ESP_LOGI(TAG, "TEST 4: motor 1 OFF");
-        // /* Stay here — don't let sensor_task overwrite the shift registers */
-        // while (1) { vTaskDelay(pdMS_TO_TICKS(1000)); }
+        const uint8_t patterns[8][3] = {
+            {0x20, 0x00, 0x00}, // level 1
+            {0x40, 0x00, 0x00}, // level 2
+            {0x60, 0x00, 0x00}, // level 3
+            {0x80, 0x00, 0x00}, // level 4
+            {0xA0, 0x00, 0x00}, // level 5
+            {0xC0, 0x00, 0x00}, // level 6
+            {0xE0, 0x00, 0x00}, // level 7
+            {0x00, 0x00, 0x00}, // all off
+        };
+        for (int lvl = 0; lvl < 8; lvl++) {
+            ESP_LOGI(TAG, "TEST 4: motor X at level %d", lvl + 1);
+            shift_register_send(patterns[lvl], 3);
+            vTaskDelay(pdMS_TO_TICKS(2000));
+        }
+        shift_register_clear();
+        ESP_LOGI(TAG, "TEST 4: motor X OFF");
+        /* Stay here — don't let sensor_task overwrite the shift registers */
+        while (1) { vTaskDelay(pdMS_TO_TICKS(1000)); }
     }
 
     /* TEST 4.2: Walk ALL 8 motors through levels 1..7, each for 1 second.
@@ -600,24 +629,24 @@ void app_main(void)
      *   level 6 (110 × 8) = 0xDB 0x6D 0xB6
      *   level 7 (111 × 8) = 0xFF 0xFF 0xFF
      */
-    {
-        const uint8_t patterns[7][3] = {
-            {0x24, 0x92, 0x49}, // level 1
-            {0x49, 0x24, 0x92}, // level 2
-            {0x6D, 0xB6, 0xDB}, // level 3
-            {0x92, 0x49, 0x24}, // level 4
-            {0xB6, 0xDB, 0x6D}, // level 5
-            {0xDB, 0x6D, 0xB6}, // level 6
-            {0xFF, 0xFF, 0xFF}, // level 7
-        };
-        for (int lvl = 0; lvl < 7; lvl++) {
-            ESP_LOGI(TAG, "TEST 4.2: all motors at level %d", lvl + 1);
-            shift_register_send(patterns[lvl], 3);
-            vTaskDelay(pdMS_TO_TICKS(1000));
-        }
-        shift_register_clear();
-        ESP_LOGI(TAG, "TEST 4.2: all motors OFF");
-    }
+    // {
+    //     const uint8_t patterns[7][3] = {
+    //         {0x24, 0x92, 0x49}, // level 1
+    //         {0x49, 0x24, 0x92}, // level 2
+    //         {0x6D, 0xB6, 0xDB}, // level 3
+    //         {0x92, 0x49, 0x24}, // level 4
+    //         {0xB6, 0xDB, 0x6D}, // level 5
+    //         {0xDB, 0x6D, 0xB6}, // level 6
+    //         {0xFF, 0xFF, 0xFF}, // level 7
+    //     };
+    //     for (int lvl = 0; lvl < 7; lvl++) {
+    //         ESP_LOGI(TAG, "TEST 4.2: all motors at level %d", lvl + 1);
+    //         shift_register_send(patterns[lvl], 3);
+    //         vTaskDelay(pdMS_TO_TICKS(1000));
+    //     }
+    //     shift_register_clear();
+    //     ESP_LOGI(TAG, "TEST 4.2: all motors OFF");
+    // }
 
     /* TEST 4.3: Walk motor 3 through levels 1..7, each for 1 second.
      *
@@ -686,6 +715,12 @@ void app_main(void)
 
     /* Start distance sensor reading task */
     sensor_task_start();
+
+    /* Battery monitor — inert unless BATTERY_MONITOR_ENABLED is flipped to 1
+     * in battery_monitor.h. Safe to leave compiled-in; nothing runs. */
+#if BATTERY_MONITOR_ENABLED
+    battery_monitor_start();
+#endif
 
     ESP_LOGI(TAG, "Belt initialized. Scanning for beacons + waiting for phone.");
 }
