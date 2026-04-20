@@ -510,12 +510,12 @@ void app_main(void)
      */
     
     // {
-    //     uint8_t pattern[3] = {0x00, 0x00, 0x01};
+    //     uint8_t pattern[3] = {0xE0, 0x00, 0x00};
 
     //     for (int lvl = 0; lvl < 1; lvl++) {
     //         ESP_LOGI(TAG, "TEST 2: motor X at level %d", lvl + 1);
     //         shift_register_send(pattern, 3);
-    //         vTaskDelay(pdMS_TO_TICKS(5000));
+    //         vTaskDelay(pdMS_TO_TICKS(8000));
     //     }
     //     shift_register_clear();
     //     ESP_LOGI(TAG, "TEST 2: motor X OFF");
@@ -594,27 +594,27 @@ void app_main(void)
      *   level 7 = 0x1C
      */
 
-    {
-        const uint8_t patterns[8][3] = {
-            {0x20, 0x00, 0x00}, // level 1
-            {0x40, 0x00, 0x00}, // level 2
-            {0x60, 0x00, 0x00}, // level 3
-            {0x80, 0x00, 0x00}, // level 4
-            {0xA0, 0x00, 0x00}, // level 5
-            {0xC0, 0x00, 0x00}, // level 6
-            {0xE0, 0x00, 0x00}, // level 7
-            {0x00, 0x00, 0x00}, // all off
-        };
-        for (int lvl = 0; lvl < 8; lvl++) {
-            ESP_LOGI(TAG, "TEST 4: motor X at level %d", lvl + 1);
-            shift_register_send(patterns[lvl], 3);
-            vTaskDelay(pdMS_TO_TICKS(2000));
-        }
-        shift_register_clear();
-        ESP_LOGI(TAG, "TEST 4: motor X OFF");
-        /* Stay here — don't let sensor_task overwrite the shift registers */
-        while (1) { vTaskDelay(pdMS_TO_TICKS(1000)); }
-    }
+    // {
+    //     const uint8_t patterns[8][3] = {
+    //         {0x20, 0x00, 0x00}, // level 1
+    //         {0x40, 0x00, 0x00}, // level 2
+    //         {0x60, 0x00, 0x00}, // level 3
+    //         {0x80, 0x00, 0x00}, // level 4
+    //         {0xA0, 0x00, 0x00}, // level 5
+    //         {0xC0, 0x00, 0x00}, // level 6
+    //         {0xE0, 0x00, 0x00}, // level 7
+    //         {0x00, 0x00, 0x00}, // all off
+    //     };
+    //     for (int lvl = 0; lvl < 8; lvl++) {
+    //         ESP_LOGI(TAG, "TEST 4: motor X at level %d", lvl + 1);
+    //         shift_register_send(patterns[lvl], 3);
+    //         vTaskDelay(pdMS_TO_TICKS(2000));
+    //     }
+    //     shift_register_clear();
+    //     ESP_LOGI(TAG, "TEST 4: motor X OFF");
+    //     /* Stay here — don't let sensor_task overwrite the shift registers */
+    //     while (1) { vTaskDelay(pdMS_TO_TICKS(1000)); }
+    // }
 
     /* TEST 4.2: Walk ALL 8 motors through levels 1..7, each for 1 second.
      *
@@ -629,24 +629,26 @@ void app_main(void)
      *   level 6 (110 × 8) = 0xDB 0x6D 0xB6
      *   level 7 (111 × 8) = 0xFF 0xFF 0xFF
      */
-    // {
-    //     const uint8_t patterns[7][3] = {
-    //         {0x24, 0x92, 0x49}, // level 1
-    //         {0x49, 0x24, 0x92}, // level 2
-    //         {0x6D, 0xB6, 0xDB}, // level 3
-    //         {0x92, 0x49, 0x24}, // level 4
-    //         {0xB6, 0xDB, 0x6D}, // level 5
-    //         {0xDB, 0x6D, 0xB6}, // level 6
-    //         {0xFF, 0xFF, 0xFF}, // level 7
-    //     };
-    //     for (int lvl = 0; lvl < 7; lvl++) {
-    //         ESP_LOGI(TAG, "TEST 4.2: all motors at level %d", lvl + 1);
-    //         shift_register_send(patterns[lvl], 3);
-    //         vTaskDelay(pdMS_TO_TICKS(1000));
-    //     }
-    //     shift_register_clear();
-    //     ESP_LOGI(TAG, "TEST 4.2: all motors OFF");
-    // }
+    {
+        // const uint8_t patterns[7][3] = {
+        //     {0x24, 0x92, 0x49}, // level 1
+        //     {0x49, 0x24, 0x92}, // level 2
+        //     {0x6D, 0xB6, 0xDB}, // level 3
+        //     {0x92, 0x49, 0x24}, // level 4
+        //     {0xB6, 0xDB, 0x6D}, // level 5
+        //     {0xDB, 0x6D, 0xB6}, // level 6
+        //     {0xFF, 0xFF, 0xFF}, // level 7
+        // };
+        // for (int lvl = 0; lvl < 7; lvl++) {
+        //     ESP_LOGI(TAG, "TEST 4.2: all motors at level %d", lvl + 1);
+        //     shift_register_send(patterns[lvl], 3);
+        //     vTaskDelay(pdMS_TO_TICKS(2000));
+        // }
+        // shift_register_clear();
+        // ESP_LOGI(TAG, "TEST 4.2: all motors OFF");
+        // /* Stay here — don't let sensor_task overwrite the shift registers */
+        // while (1) { vTaskDelay(pdMS_TO_TICKS(1000)); }
+    }
 
     /* TEST 4.3: Walk motor 3 through levels 1..7, each for 1 second.
      *

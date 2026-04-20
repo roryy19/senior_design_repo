@@ -15,6 +15,7 @@
 
 #include <string.h>
 #include "esp_log.h"
+#include "esp_rom_sys.h"
 
 static const char *TAG = "SHIFT_REG";
 
@@ -76,14 +77,18 @@ void shift_register_send(const uint8_t *data, int num_bytes)
     for (int i = num_bytes - 1; i >= 0; i--) {
         for (int bit = 0; bit <= 7; bit++) {
             gpio_set_level(SR_DATA_PIN, (data[i] >> bit) & 0x01);
+            esp_rom_delay_us(1);            /* DATA setup before CLK rise */
             gpio_set_level(SR_CLK_PIN, 1);  /* rising edge: bit captured */
+            esp_rom_delay_us(1);
             gpio_set_level(SR_CLK_PIN, 0);
         }
     }
 
     /* Pulse LATCH: rising edge transfers shift register contents
      * to the output register. All motor outputs update at once. */
+    esp_rom_delay_us(1);
     gpio_set_level(SR_LATCH_PIN, 1);
+    esp_rom_delay_us(1);
     gpio_set_level(SR_LATCH_PIN, 0);
 }
 

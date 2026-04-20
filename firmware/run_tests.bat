@@ -11,7 +11,8 @@ g++ -std=c++17 -Wall -Wextra -I src/core -o tests/run_tests.exe ^
     tests/test_motor_mapper.cpp ^
     tests/test_shift_register_packer.cpp ^
     tests/test_pipeline.cpp ^
-    tests/test_shift_register_output.cpp
+    tests/test_shift_register_output.cpp ^
+    tests/test_esp_driver_sim.cpp
 
 if %ERRORLEVEL% NEQ 0 (
     echo Compilation failed.

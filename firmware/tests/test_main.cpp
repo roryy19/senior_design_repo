@@ -11,6 +11,7 @@ void runMotorMapperTests();
 void runShiftRegisterPackerTests();
 void runPipelineTests();
 void runShiftRegisterOutputTests();
+void runEspDriverSimTests();
 
 int main() {
     printf("=== Firmware Core Logic Test Suite ===\n\n");
@@ -29,6 +30,9 @@ int main() {
 
     printf("\n--- Shift Register Output Simulation ---\n");
     runShiftRegisterOutputTests();
+
+    printf("\n--- ESP Driver Bit-Exact Simulation ---\n");
+    runEspDriverSimTests();
 
     printSummary();
 
