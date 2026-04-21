@@ -415,7 +415,7 @@ static int ble_gap_event_handler(struct ble_gap_event *event, void *arg)
     case BLE_GAP_EVENT_DISCONNECT:
         connected = false;
         notify_enabled = false;
-        ESP_LOGI(TAG, "Phone disconnected, reason=%d — re-advertising...",
+        ESP_LOGI(TAG, "Phone disconnected, reason=%d -- re-advertising...",
                  event->disconnect.reason);
         start_advertising();
         break;

@@ -201,7 +201,7 @@ static void check_beacon_timeouts(void)
             bs->currently_near = false;
             bs->rssi_count = 0;
             bs->rssi_idx = 0;
-            ESP_LOGI(TAG, "Beacon %d left proximity (timeout — no signal)", i);
+            ESP_LOGI(TAG, "Beacon %d left proximity (timeout -- no signal)", i);
         }
     }
 }

@@ -206,7 +206,7 @@ static void sensor_recover(void)
 /* ── The FreeRTOS task function ───────────────────────────────────── */
 static void sensor_task(void *param)
 {
-    ESP_LOGI(TAG, "Sensor task started — reading %d sensors every 50ms",
+    ESP_LOGI(TAG, "Sensor task started -- reading %d sensors every 50ms",
              NUM_ACTIVE_SENSORS);
 
 #ifdef SINGLE_SENSOR_BROADCAST
@@ -346,7 +346,7 @@ static void sensor_task(void *param)
             for (int i = 0; i < NUM_ACTIVE_SENSORS; i++) {
                 if (!s_sensors[i].ok) continue;
                 int idx = s_sensors[i].sensor_index;
-                ESP_LOGI(TAG, "  mux 0x%02X ch%d (%s) → index %d: %6.1f cm",
+                ESP_LOGI(TAG, "  mux 0x%02X ch%d (%s) -> index %d: %6.1f cm",
                          s_sensors[i].mux_addr, s_sensors[i].mux_channel,
                          s_sensors[i].sensor_type == SENSOR_TYPE_L1X ? "L1X" : "L0X",
                          idx, s_distances_cm[idx]);
@@ -403,7 +403,7 @@ bool sensor_task_init(void)
     /* ── Step 2: Initialize both PCA9548A multiplexers ───────────── */
     rc = pca9548a_init(s_bus);
     if (rc != ESP_OK) {
-        ESP_LOGW(TAG, "Mux init failed — will retry in sensor loop");
+        ESP_LOGW(TAG, "Mux init failed -- will retry in sensor loop");
     }
 
     /* ── Step 3: Create shared I2C device handle at 0x29 ─────────── *
@@ -460,7 +460,7 @@ bool sensor_task_init(void)
         s_sensors[i].ok = init_ok;
         if (init_ok) {
             ok_count++;
-            ESP_LOGI(TAG, "mux 0x%02X ch%d (%s) → pipeline index %d — OK",
+            ESP_LOGI(TAG, "mux 0x%02X ch%d (%s) -> pipeline index %d -- OK",
                      s_sensors[i].mux_addr, s_sensors[i].mux_channel,
                      type_str, s_sensors[i].sensor_index);
         } else {
@@ -476,7 +476,7 @@ bool sensor_task_init(void)
         ESP_LOGI(TAG, "%d/%d sensors ready (%d L1X, %d L0X)",
                  ok_count, NUM_ACTIVE_SENSORS, l1x_count, l0x_count);
     } else {
-        ESP_LOGW(TAG, "0 sensors ready — task will retry periodically");
+        ESP_LOGW(TAG, "0 sensors ready -- task will retry periodically");
     }
     return true;
 }

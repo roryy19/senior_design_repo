@@ -1,0 +1,1398 @@
+Executing action: monitor
+Running idf_monitor in directory C:\2026_spring\ece1896\senior_design_repo\firmware\esp
+Executing "C:\Users\rcook\.espressif\python_env\idf5.5_py3.13_env\Scripts\python.exe C:\esp\v5.5.3\esp-idf\tools/idf_monitor.py -p COM5 -b 115200 --toolchain-prefix xtensa-esp32s3-elf- --target esp32s3 --revision 0 C:\2026_spring\ece1896\senior_design_repo\firmware\esp\build\obstacle_belt.elf C:\2026_spring\ece1896\senior_design_repo\firmware\esp\build\bootloader\bootloader.elf --force-color -m 'C:\Users\rcook\.espressif\python_env\idf5.5_py3.13_env\Scripts\python.exe' 'C:\esp\v5.5.3\esp-idf\tools\idf.py' '-p' 'COM5'"...
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce2820,len:0x14f0
+load:0x403c8700,len:0xd24
+load:0x403cb700,len:0x2ef0
+entry 0x403c8924
+I (24) boot: ESP-IDF v5.5.3 2nd stage bootloader
+I (25) boot: compile time Mar 25 2026 14:13:02
+I (25) boot: Multicore bootloader
+I (25) boot: chip revision: v0.2
+I (28) boot: efuse block revision: v1.3
+I (31) boot.esp32s3: Boot SPI Speed : 80MHz
+I (35) boot.esp32s3: SPI Mode       : DIO
+I (39) boot.esp32s3: SPI Flash Size : 16MB
+I (43) boot: Enabling RNG early entropy source...
+I (47) boot: Partition Table:
+I (50) boot: ## Label            Usage          Type ST Offset   Length
+I (56) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (63) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+I (69) boot:  2 factory          factory app      00 00 00010000 00300000
+I (76) boot:  3 storage          Unknown data     01 82 00310000 00100000
+I (82) boot: End of partition table
+I (86) esp_image: segment 0: paddr=00010020 vaddr=3c070020 size=17e40h ( 97856) map
+I (110) esp_image: segment 1: paddr=00027e68 vaddr=3fc9a000 size=042f8h ( 17144) load
+I (114) esp_image: segment 2: paddr=0002c168 vaddr=40374000 size=03eb0h ( 16048) load
+I (118) esp_image: segment 3: paddr=00030020 vaddr=42000020 size=62ac0h (404160) map
+I (193) esp_image: segment 4: paddr=00092ae8 vaddr=40377eb0 size=1208ch ( 73868) load
+I (209) esp_image: segment 5: paddr=000a4b7c vaddr=50000000 size=00020h (    32) load
+I (218) boot: Loaded app from partition at offset 0x10000
+I (218) boot: Disabling RNG early entropy source...
+I (228) cpu_start: Multicore app
+I (237) cpu_start: GPIO 44 and 43 are used as console UART I/O pins
+I (238) cpu_start: Pro cpu start user code
+I (238) cpu_start: cpu freq: 160000000 Hz
+I (239) app_init: Application information:
+I (243) app_init: Project name:     obstacle_belt
+I (247) app_init: App version:      755fabd
+I (251) app_init: Compile time:     Apr 19 2026 21:24:08
+I (256) app_init: ELF file SHA256:  fcd65c281...
+I (261) app_init: ESP-IDF:          v5.5.3
+I (264) efuse_init: Min chip rev:     v0.0
+I (268) efuse_init: Max chip rev:     v0.99 
+I (272) efuse_init: Chip rev:         v0.2
+I (276) heap_init: Initializing. RAM available for dynamic allocation:
+I (282) heap_init: At 3FCA7328 len 000423E8 (264 KiB): RAM
+I (287) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM
+I (293) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM
+I (298) heap_init: At 600FE000 len 00001FE8 (7 KiB): RTCRAM
+I (304) spi_flash: detected chip: boya
+I (307) spi_flash: flash io: dio
+I (310) sleep_gpio: Configure to isolate all GPIO pins in sleep state
+I (316) sleep_gpio: Enable automatic switching of GPIO sleep configuration
+I (323) coexist: coex firmware version: 093e3d2
+I (327) coexist: coexist rom version e7ae62f
+I (331) main_task: Started on CPU0
+I (361) main_task: Calling app_main()
+I (361) BELT_BLE: === Obstacle Detection Belt Firmware ===
+I (421) CLIP_STORE: SPIFFS mounted: 956561 bytes total, 17821 bytes used
+I (421) AUDIO: Audio player initialized (I2S: BCLK=5 LRC=6 DIN=7, 16000 Hz 16-bit)
+I (431) SENSOR: Initializing sensors (12 active)...
+I (431) SENSOR: I2C bus created (SDA=8, SCL=9, 400kHz)
+I (441) PCA9548A: Multiplexers initialized (MUX0=0x70, MUX1=0x71)
+I (441) SENSOR: Sensor device added to bus (addr=0x29)
+W (451) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (451) PCA9548A: Failed to select mux 0x71 ch 0: ESP_ERR_INVALID_STATE
+E (471) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (471) SENSOR: mux 0x71 ch0 (VL53L1X) init FAILED
+W (471) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (481) PCA9548A: Failed to select mux 0x71 ch 1: ESP_ERR_INVALID_STATE
+E (501) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (501) SENSOR: mux 0x71 ch1 (VL53L1X) init FAILED
+W (501) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (511) PCA9548A: Failed to select mux 0x71 ch 2: ESP_ERR_INVALID_STATE
+E (521) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (531) SENSOR: mux 0x71 ch2 (VL53L1X) init FAILED
+W (531) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (541) PCA9548A: Failed to select mux 0x71 ch 3: ESP_ERR_INVALID_STATE
+E (551) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (551) SENSOR: mux 0x71 ch3 (VL53L1X) init FAILED
+W (561) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (561) PCA9548A: Failed to select mux 0x71 ch 4: ESP_ERR_INVALID_STATE
+E (581) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (581) SENSOR: mux 0x71 ch4 (VL53L1X) init FAILED
+W (591) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (591) PCA9548A: Failed to select mux 0x71 ch 5: ESP_ERR_INVALID_STATE
+E (611) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (611) SENSOR: mux 0x71 ch5 (VL53L1X) init FAILED
+W (611) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (621) PCA9548A: Failed to select mux 0x71 ch 6: ESP_ERR_INVALID_STATE
+E (641) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (641) SENSOR: mux 0x71 ch6 (VL53L1X) init FAILED
+W (641) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (651) PCA9548A: Failed to select mux 0x70 ch 0: ESP_ERR_INVALID_STATE
+E (661) VL53L0X: Sensor not found! Expected model ID 0xEE, got 0xC5
+W (661) SENSOR: mux 0x70 ch0 (VL53L0X) init FAILED
+W (671) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (671) PCA9548A: Failed to select mux 0x70 ch 1: ESP_ERR_INVALID_STATE
+E (691) VL53L0X: Sensor not found! Expected model ID 0xEE, got 0xC5
+W (691) SENSOR: mux 0x70 ch1 (VL53L0X) init FAILED
+W (691) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (691) PCA9548A: Failed to select mux 0x70 ch 2: ESP_ERR_INVALID_STATE
+E (711) VL53L0X: Sensor not found! Expected model ID 0xEE, got 0xC5
+W (711) SENSOR: mux 0x70 ch2 (VL53L0X) init FAILED
+W (711) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (721) PCA9548A: Failed to select mux 0x70 ch 3: ESP_ERR_INVALID_STATE
+E (731) VL53L0X: Sensor not found! Expected model ID 0xEE, got 0xC5
+W (731) SENSOR: mux 0x70 ch3 (VL53L0X) init FAILED
+W (731) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (741) PCA9548A: Failed to select mux 0x70 ch 4: ESP_ERR_INVALID_STATE
+E (761) VL53L0X: Sensor not found! Expected model ID 0xEE, got 0xC5
+W (761) SENSOR: mux 0x70 ch4 (VL53L0X) init FAILED
+W (761) SENSOR: 0 sensors ready -- task will retry periodically
+I (761) SHIFT_REG: Shift register initialized (DATA=2, CLK=35, LATCH=38, OE=37, RESET=36)
+I (771) BLE_INIT: BT controller compile version [1bb2f50]
+I (781) BLE_INIT: Using main XTAL as clock source
+I (781) BLE_INIT: Feature Config, ADV:1, BLE_50:1, DTM:1, SCAN:1, CCA:0, SMP:1, CONNECT:1
+I (791) BLE_INIT: Bluetooth MAC: 20:6e:f1:84:60:4a
+I (791) phy_init: phy_version 711,97bcf0a2,Aug 25 2025,19:04:10
+I (841) SENSOR: Sensor task started -- reading 12 sensors every 50ms
+I (841) BELT_BLE: Belt initialized. Scanning for beacons + waiting for phone.
+I (841) main_task: Returned from app_main()
+I (1841) BEACON_SCAN: Beacon scan task started (0 known beacons)
+W (2791) SENSOR: I2C recovery: resetting bus, re-initializing sensors...
+W (2851) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (2851) PCA9548A: Failed to select mux 0x71 ch 0: ESP_ERR_INVALID_STATE
+E (2861) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (2861) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (2861) PCA9548A: Failed to select mux 0x71 ch 1: ESP_ERR_INVALID_STATE
+E (2881) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (2881) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (2891) PCA9548A: Failed to select mux 0x71 ch 2: ESP_ERR_INVALID_STATE
+E (2901) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (2911) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (2911) PCA9548A: Failed to select mux 0x71 ch 3: ESP_ERR_INVALID_STATE
+E (2931) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (2931) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (2941) PCA9548A: Failed to select mux 0x71 ch 4: ESP_ERR_INVALID_STATE
+E (2951) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (2951) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (2961) PCA9548A: Failed to select mux 0x71 ch 5: ESP_ERR_INVALID_STATE
+E (2981) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (2981) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (2981) PCA9548A: Failed to select mux 0x71 ch 6: ESP_ERR_INVALID_STATE
+E (3001) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (3001) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (3011) PCA9548A: Failed to select mux 0x70 ch 0: ESP_ERR_INVALID_STATE
+E (3021) VL53L0X: Sensor not found! Expected model ID 0xEE, got 0xC5
+W (3021) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (3031) PCA9548A: Failed to select mux 0x70 ch 1: ESP_ERR_INVALID_STATE
+E (3041) VL53L0X: Sensor not found! Expected model ID 0xEE, got 0xC5
+W (3041) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (3041) PCA9548A: Failed to select mux 0x70 ch 2: ESP_ERR_INVALID_STATE
+E (3061) VL53L0X: Sensor not found! Expected model ID 0xEE, got 0xC5
+W (3061) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (3061) PCA9548A: Failed to select mux 0x70 ch 3: ESP_ERR_INVALID_STATE
+E (3081) VL53L0X: Sensor not found! Expected model ID 0xEE, got 0xC5
+W (3081) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (3081) PCA9548A: Failed to select mux 0x70 ch 4: ESP_ERR_INVALID_STATE
+E (3101) VL53L0X: Sensor not found! Expected model ID 0xEE, got 0xC5
+I (3101) SENSOR: Recovery: 0/12 sensors restored
+W (5101) SENSOR: I2C recovery: resetting bus, re-initializing sensors...
+W (5161) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (5161) PCA9548A: Failed to select mux 0x71 ch 0: ESP_ERR_INVALID_STATE
+E (5171) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (5171) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (5171) PCA9548A: Failed to select mux 0x71 ch 1: ESP_ERR_INVALID_STATE
+E (5191) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (5191) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (5201) PCA9548A: Failed to select mux 0x71 ch 2: ESP_ERR_INVALID_STATE
+E (5211) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (5221) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (5221) PCA9548A: Failed to select mux 0x71 ch 3: ESP_ERR_INVALID_STATE
+E (5241) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (5241) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (5251) PCA9548A: Failed to select mux 0x71 ch 4: ESP_ERR_INVALID_STATE
+E (5261) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (5261) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (5271) PCA9548A: Failed to select mux 0x71 ch 5: ESP_ERR_INVALID_STATE
+E (5291) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (5291) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (5291) PCA9548A: Failed to select mux 0x71 ch 6: ESP_ERR_INVALID_STATE
+E (5311) VL53L1X: Sensor not found! Expected model ID 0xEA, got 0xC5. Check wiring: VIN->3.3V, GND->GND, SDA->GPIO8, SCL->GPIO9
+W (5311) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (5321) PCA9548A: Failed to select mux 0x70 ch 0: ESP_ERR_INVALID_STATE
+E (5331) VL53L0X: Sensor not found! Expected model ID 0xEE, got 0xC5
+W (5331) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (5341) PCA9548A: Failed to select mux 0x70 ch 1: ESP_ERR_INVALID_STATE
+E (5351) VL53L0X: Sensor not found! Expected model ID 0xEE, got 0xC5
+W (5351) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (5351) PCA9548A: Failed to select mux 0x70 ch 2: ESP_ERR_INVALID_STATE
+E (5371) VL53L0X: Sensor not found! Expected model ID 0xEE, got 0xC5
+W (5371) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (5371) PCA9548A: Failed to select mux 0x70 ch 3: ESP_ERR_INVALID_STATE
+E (5391) VL53L0X: Sensor not found! Expected model ID 0xEE, got 0xC5
+W (5391) PCA9548A: Failed to disable other mux: ESP_ERR_INVALID_STATE
+E (5391) PCA9548A: Failed to select mux 0x70 ch 4: ESP_ERR_INVALID_STATE
+E (5411) VL53L0X: Sensor not found! Expected model ID 0xEE, got 0xC5
+I (5411) SENSOR: Recovery: 0/12 sensors restored
+W (7411) SENSOR: I2C recovery: resetting bus, re-initializing sensors...
+I (7481) VL53L1X: Sensor detected (model ID: 0xEA)
+I (7481) VL53L1X: Sensor firmware ready
+I (7551) VL53L1X: Sensor configured: Long mode, 50ms timing budget
+I (7561) VL53L1X: Sensor detected (model ID: 0xEA)
+I (7561) VL53L1X: Sensor firmware ready
+I (7681) VL53L1X: Sensor configured: Long mode, 50ms timing budget
+I (7691) VL53L1X: Sensor detected (model ID: 0xEA)
+I (7691) VL53L1X: Sensor firmware ready
+I (7811) VL53L1X: Sensor configured: Long mode, 50ms timing budget
+I (7821) VL53L1X: Sensor detected (model ID: 0xEA)
+I (7821) VL53L1X: Sensor firmware ready
+I (7941) VL53L1X: Sensor configured: Long mode, 50ms timing budget
+I (7951) VL53L1X: Sensor detected (model ID: 0xEA)
+I (7951) VL53L1X: Sensor firmware ready
+I (8071) VL53L1X: Sensor configured: Long mode, 50ms timing budget
+I (8081) VL53L1X: Sensor detected (model ID: 0xEA)
+I (8081) VL53L1X: Sensor firmware ready
+I (8161) VL53L1X: Sensor configured: Long mode, 50ms timing budget
+I (8171) VL53L1X: Sensor detected (model ID: 0xEA)
+I (8171) VL53L1X: Sensor firmware ready
+I (8291) VL53L1X: Sensor configured: Long mode, 50ms timing budget
+I (8301) VL53L0X: Sensor detected (model ID: 0xEE)
+I (8331) VL53L0X: Sensor configured: default timing, continuous mode ready
+I (8341) VL53L0X: Sensor detected (model ID: 0xEE)
+I (8371) VL53L0X: Sensor configured: default timing, continuous mode ready
+I (8381) VL53L0X: Sensor detected (model ID: 0xEE)
+I (8411) VL53L0X: Sensor configured: default timing, continuous mode ready
+I (8421) VL53L0X: Sensor detected (model ID: 0xEE)
+I (8451) VL53L0X: Sensor configured: default timing, continuous mode ready
+I (8461) VL53L0X: Sensor detected (model ID: 0xEE)
+I (8491) VL53L0X: Sensor configured: default timing, continuous mode ready
+I (8491) SENSOR: Recovery: 12/12 sensors restored
+I (8551) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (8551) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  185.6 cm
+I (8551) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  165.0 cm
+I (8551) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.5 cm
+I (8561) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  192.3 cm
+I (8561) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (8571) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  196.4 cm
+I (8571) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  999.0 cm
+I (8581) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  819.0 cm
+I (8591) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:  819.0 cm
+I (8591) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  819.0 cm
+I (8601) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (8601) SENSOR:   Motor 0: level 0/7 (was 0)
+I (8611) SENSOR:   Motor 1: level 0/7 (was 0)
+I (8611) SENSOR:   Motor 2: level 0/7 (was 0)
+I (8611) SENSOR:   Motor 3: level 0/7 (was 0)
+I (8621) SENSOR:   Motor 4: level 0/7 (was 0)
+I (8621) SENSOR:   Motor 5: level 0/7 (was 0)
+I (8631) SENSOR:   Motor 6: level 0/7 (was 0)
+I (8631) SENSOR:   Motor 7: level 0/7 (was 0)
+I (15831) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (15831) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (15831) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.1 cm
+I (15831) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.9 cm
+I (15841) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  186.9 cm
+I (15841) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (15851) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  130.6 cm
+I (15851) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (15861) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (15861) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   96.9 cm
+I (15871) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (15881) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (15881) SENSOR:   Motor 3: level 1/7 (was 0)
+I (15891) SENSOR:   Motor 4: level 1/7 (was 0)
+I (15891) SENSOR:   Motor 5: level 1/7 (was 0)
+I (15951) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (15951) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  184.2 cm
+I (15951) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.4 cm
+I (15951) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.6 cm
+I (15961) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  183.2 cm
+I (15961) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (15971) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  119.1 cm
+I (15981) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (15981) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (15991) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:  107.2 cm
+I (15991) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (16001) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (16001) SENSOR:   Motor 3: level 0/7 (was 1)
+I (16011) SENSOR:   Motor 4: level 0/7 (was 1)
+I (16011) SENSOR:   Motor 5: level 0/7 (was 1)
+I (16071) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (16071) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  183.6 cm
+I (16071) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.8 cm
+I (16071) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.8 cm
+I (16081) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  182.8 cm
+I (16081) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (16091) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  137.4 cm
+I (16101) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (16101) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (16111) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   96.1 cm
+I (16111) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (16121) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (16121) SENSOR:   Motor 3: level 1/7 (was 0)
+I (16131) SENSOR:   Motor 4: level 1/7 (was 0)
+I (16131) SENSOR:   Motor 5: level 1/7 (was 0)
+I (16191) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (16191) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  185.5 cm
+I (16191) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.6 cm
+I (16191) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.7 cm
+I (16201) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  185.9 cm
+I (16201) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (16211) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  156.5 cm
+I (16211) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (16221) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (16231) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:  999.0 cm
+I (16231) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (16241) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (16241) SENSOR:   Motor 3: level 0/7 (was 1)
+I (16251) SENSOR:   Motor 4: level 0/7 (was 1)
+I (16251) SENSOR:   Motor 5: level 0/7 (was 1)
+I (16311) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (16311) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (16311) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  162.5 cm
+I (16311) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.4 cm
+I (16321) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  186.5 cm
+I (16321) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (16331) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  154.4 cm
+I (16331) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (16341) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   93.1 cm
+I (16351) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   87.8 cm
+I (16351) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (16361) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (16361) SENSOR:   Motor 3: level 1/7 (was 0)
+I (16371) SENSOR:   Motor 4: level 1/7 (was 0)
+I (16371) SENSOR:   Motor 5: level 1/7 (was 0)
+I (16611) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (16611) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  184.8 cm
+I (16611) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  162.5 cm
+I (16611) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.5 cm
+I (16621) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  187.7 cm
+I (16621) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (16631) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  173.5 cm
+I (16641) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (16641) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (16651) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   81.7 cm
+I (16651) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (16661) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (16661) SENSOR:   Motor 4: level 2/7 (was 1)
+I (16791) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (16791) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (16791) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.6 cm
+I (16791) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.3 cm
+I (16801) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  187.2 cm
+I (16801) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (16811) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  176.1 cm
+I (16811) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (16821) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (16831) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   90.4 cm
+I (16831) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (16841) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (16841) SENSOR:   Motor 4: level 1/7 (was 2)
+I (16911) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (16911) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  185.8 cm
+I (16911) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.3 cm
+I (16911) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.2 cm
+I (16921) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  194.1 cm
+I (16921) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (16931) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  190.9 cm
+I (16941) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (16941) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (16951) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:  999.0 cm
+I (16951) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (16961) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (16961) SENSOR:   Motor 3: level 0/7 (was 1)
+I (16971) SENSOR:   Motor 4: level 0/7 (was 1)
+I (16971) SENSOR:   Motor 5: level 0/7 (was 1)
+I (17031) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (17031) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  186.9 cm
+I (17031) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.7 cm
+I (17031) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.3 cm
+I (17041) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  191.5 cm
+I (17041) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (17051) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  190.4 cm
+I (17051) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (17061) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (17071) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   86.0 cm
+I (17071) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (17081) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (17081) SENSOR:   Motor 3: level 1/7 (was 0)
+I (17091) SENSOR:   Motor 4: level 1/7 (was 0)
+I (17091) SENSOR:   Motor 5: level 1/7 (was 0)
+I (17271) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (17271) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  184.1 cm
+I (17271) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  162.6 cm
+I (17271) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.7 cm
+I (17281) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  186.6 cm
+I (17281) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (17291) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  999.0 cm
+I (17291) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (17301) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (17311) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   83.5 cm
+I (17311) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (17321) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (17321) SENSOR:   Motor 4: level 2/7 (was 1)
+I (17391) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (17391) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  183.1 cm
+I (17391) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.3 cm
+I (17391) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.7 cm
+I (17401) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  188.6 cm
+I (17401) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (17411) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  197.1 cm
+I (17411) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (17421) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   83.4 cm
+I (17431) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:  999.0 cm
+I (17431) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (17441) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (17441) SENSOR:   Motor 3: level 2/7 (was 1)
+I (17451) SENSOR:   Motor 4: level 1/7 (was 2)
+I (17451) SENSOR:   Motor 5: level 0/7 (was 1)
+I (17511) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  167.4 cm
+I (17511) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  185.2 cm
+I (17511) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.1 cm
+I (17511) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.1 cm
+I (17521) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  188.6 cm
+I (17521) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (17531) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  196.4 cm
+I (17531) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (17541) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (17551) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:  999.0 cm
+I (17551) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (17561) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (17561) SENSOR:   Motor 3: level 0/7 (was 2)
+I (17571) SENSOR:   Motor 4: level 0/7 (was 1)
+I (17631) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (17631) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (17631) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.8 cm
+I (17631) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.2 cm
+I (17641) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  189.9 cm
+I (17641) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (17651) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  192.9 cm
+I (17651) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (17661) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   78.6 cm
+I (17671) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   81.3 cm
+I (17671) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (17681) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (17681) SENSOR:   Motor 3: level 2/7 (was 0)
+I (17691) SENSOR:   Motor 4: level 2/7 (was 0)
+I (17691) SENSOR:   Motor 5: level 1/7 (was 0)
+I (17811) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  164.1 cm
+I (17811) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (17811) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.2 cm
+I (17811) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.0 cm
+I (17821) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  184.2 cm
+I (17821) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (17831) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  195.8 cm
+I (17831) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (17841) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (17841) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   84.9 cm
+I (17851) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (17861) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (17861) SENSOR:   Motor 3: level 1/7 (was 2)
+I (17931) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (17931) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  182.7 cm
+I (17931) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.7 cm
+I (17931) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  184.3 cm
+I (17941) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  188.8 cm
+I (17941) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (17951) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  196.9 cm
+I (17961) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (17961) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   83.3 cm
+I (17971) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   82.0 cm
+I (17971) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (17981) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (17981) SENSOR:   Motor 3: level 2/7 (was 1)
+I (18231) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (18231) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  184.2 cm
+I (18231) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.0 cm
+I (18231) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  181.6 cm
+I (18241) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  189.4 cm
+I (18241) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (18251) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  198.4 cm
+I (18251) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (18261) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (18271) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   77.1 cm
+I (18271) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (18281) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (18281) SENSOR:   Motor 3: level 1/7 (was 2)
+I (18351) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (18351) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  184.3 cm
+I (18351) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.0 cm
+I (18361) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.5 cm
+I (18361) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  193.3 cm
+I (18371) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (18371) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  191.7 cm
+I (18381) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (18381) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   77.3 cm
+I (18391) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   75.5 cm
+I (18391) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (18401) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (18401) SENSOR:   Motor 3: level 2/7 (was 1)
+I (18471) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (18471) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  187.3 cm
+I (18471) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  162.1 cm
+I (18471) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.3 cm
+I (18481) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  187.5 cm
+I (18481) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (18491) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  193.6 cm
+I (18501) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (18501) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   77.5 cm
+I (18511) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   79.5 cm
+I (18511) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   84.1 cm
+I (18521) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (18521) SENSOR:   Motor 5: level 2/7 (was 1)
+I (18591) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (18591) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (18591) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  162.2 cm
+I (18591) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.1 cm
+I (18601) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  191.7 cm
+I (18601) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (18611) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  202.8 cm
+I (18621) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (18621) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   72.5 cm
+I (18631) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   71.4 cm
+I (18631) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   86.9 cm
+I (18641) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (18641) SENSOR:   Motor 5: level 1/7 (was 2)
+I (18831) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  160.2 cm
+I (18831) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  183.7 cm
+I (18831) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.9 cm
+I (18831) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.9 cm
+I (18841) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  181.6 cm
+I (18851) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (18851) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  192.7 cm
+I (18861) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (18861) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (18871) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   78.7 cm
+I (18871) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (18881) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (18881) SENSOR:   Motor 3: level 1/7 (was 2)
+I (18951) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (18951) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (18951) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  162.7 cm
+I (18951) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.2 cm
+I (18961) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  185.0 cm
+I (18961) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (18971) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  200.6 cm
+I (18971) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (18981) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   68.6 cm
+I (18991) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   71.1 cm
+I (18991) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (19001) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (19001) SENSOR:   Motor 3: level 3/7 (was 1)
+I (19191) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (19191) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (19191) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  162.5 cm
+I (19191) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.8 cm
+I (19201) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  192.2 cm
+I (19201) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (19211) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  200.7 cm
+I (19211) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (19221) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   70.9 cm
+I (19231) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   71.1 cm
+I (19231) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   83.2 cm
+I (19241) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (19241) SENSOR:   Motor 3: level 2/7 (was 3)
+I (19251) SENSOR:   Motor 5: level 2/7 (was 1)
+I (19311) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  163.2 cm
+I (19311) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  183.9 cm
+I (19311) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.7 cm
+I (19311) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.3 cm
+I (19321) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  185.2 cm
+I (19321) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (19331) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  999.0 cm
+I (19341) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (19341) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   66.0 cm
+I (19351) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   71.9 cm
+I (19351) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   79.4 cm
+I (19361) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (19361) SENSOR:   Motor 3: level 3/7 (was 2)
+I (19431) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  161.8 cm
+I (19431) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (19431) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.2 cm
+I (19431) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.7 cm
+I (19441) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  181.7 cm
+I (19441) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (19451) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  198.0 cm
+I (19451) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (19461) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   68.4 cm
+I (19471) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   71.7 cm
+I (19471) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (19481) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (19481) SENSOR:   Motor 5: level 1/7 (was 2)
+I (19551) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (19551) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  184.8 cm
+I (19551) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.2 cm
+I (19551) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.6 cm
+I (19561) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  180.2 cm
+I (19561) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (19571) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  199.3 cm
+I (19581) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (19581) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   66.2 cm
+I (19591) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   65.9 cm
+I (19591) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (19601) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (19601) SENSOR:   Motor 4: level 3/7 (was 2)
+I (19611) SENSOR:   Motor 5: level 2/7 (was 1)
+I (20451) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  160.1 cm
+I (20451) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (20451) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.8 cm
+I (20451) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.0 cm
+I (20461) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  186.9 cm
+I (20461) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (20471) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  198.6 cm
+I (20481) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (20481) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   60.5 cm
+I (20491) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   58.3 cm
+I (20491) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   61.4 cm
+I (20501) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (20501) SENSOR:   Motor 5: level 3/7 (was 2)
+I (20631) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (20631) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  185.7 cm
+I (20631) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.8 cm
+I (20631) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.3 cm
+I (20641) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  186.4 cm
+I (20641) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (20651) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  201.5 cm
+I (20661) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (20661) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   59.0 cm
+I (20671) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   53.2 cm
+I (20671) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (20681) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (20681) SENSOR:   Motor 4: level 4/7 (was 3)
+I (20691) SENSOR:   Motor 5: level 2/7 (was 3)
+I (20751) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (20751) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (20751) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.2 cm
+I (20751) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.7 cm
+I (20761) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  190.2 cm
+I (20761) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (20771) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  191.1 cm
+I (20771) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (20781) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   57.5 cm
+I (20791) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   55.6 cm
+I (20791) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (20801) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (20801) SENSOR:   Motor 4: level 3/7 (was 4)
+I (20871) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (20871) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (20871) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  165.0 cm
+I (20871) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.6 cm
+I (20881) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  183.1 cm
+I (20891) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (20891) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  999.0 cm
+I (20901) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (20901) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   57.3 cm
+I (20911) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   53.9 cm
+I (20911) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (20921) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (20921) SENSOR:   Motor 4: level 4/7 (was 3)
+I (20991) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (20991) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  187.1 cm
+I (20991) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.8 cm
+I (20991) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  184.0 cm
+I (21001) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  186.1 cm
+I (21001) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (21011) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  198.3 cm
+I (21021) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (21021) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   57.0 cm
+I (21031) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   51.9 cm
+I (21031) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   64.6 cm
+I (21041) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (21041) SENSOR:   Motor 5: level 3/7 (was 2)
+I (21111) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  161.1 cm
+I (21111) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  182.7 cm
+I (21111) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  165.8 cm
+I (21111) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.6 cm
+I (21121) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  185.6 cm
+I (21131) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (21131) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  201.0 cm
+I (21141) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (21141) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   53.5 cm
+I (21151) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   50.2 cm
+I (21151) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   62.8 cm
+I (21161) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (21161) SENSOR:   Motor 3: level 4/7 (was 3)
+I (21231) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (21231) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (21231) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  162.6 cm
+I (21231) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.6 cm
+I (21241) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  187.7 cm
+I (21241) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (21251) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  194.5 cm
+I (21261) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (21261) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   52.0 cm
+I (21271) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   51.1 cm
+I (21271) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (21281) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (21281) SENSOR:   Motor 5: level 2/7 (was 3)
+I (21591) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (21591) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  185.5 cm
+I (21591) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.4 cm
+I (21591) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.2 cm
+I (21601) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  185.9 cm
+I (21601) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (21611) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  203.0 cm
+I (21611) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (21621) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   50.5 cm
+I (21621) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   48.7 cm
+I (21631) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   62.5 cm
+I (21641) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (21641) SENSOR:   Motor 5: level 3/7 (was 2)
+I (21761) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (21761) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (21761) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.1 cm
+I (21761) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.6 cm
+I (21771) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  187.9 cm
+I (21771) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (21781) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  195.3 cm
+I (21781) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (21791) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   52.5 cm
+I (21791) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   48.6 cm
+I (21801) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   52.3 cm
+I (21811) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (21811) SENSOR:   Motor 5: level 4/7 (was 3)
+I (21881) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  162.3 cm
+I (21881) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  185.1 cm
+I (21881) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.2 cm
+I (21881) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.3 cm
+I (21891) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  188.7 cm
+I (21891) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (21901) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  195.5 cm
+I (21911) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (21911) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   50.3 cm
+I (21921) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   46.9 cm
+I (21921) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (21931) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (21931) SENSOR:   Motor 5: level 2/7 (was 4)
+I (22121) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  161.9 cm
+I (22121) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  187.6 cm
+I (22121) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  161.6 cm
+I (22121) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.4 cm
+I (22131) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  181.4 cm
+I (22131) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  170.8 cm
+I (22141) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  203.6 cm
+I (22151) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (22151) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   51.4 cm
+I (22161) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   46.0 cm
+I (22161) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   55.7 cm
+I (22171) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (22171) SENSOR:   Motor 5: level 3/7 (was 2)
+I (22241) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (22241) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  183.2 cm
+I (22241) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.3 cm
+I (22241) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.2 cm
+I (22251) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  187.8 cm
+I (22251) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (22261) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  198.6 cm
+I (22271) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (22271) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   49.2 cm
+I (22281) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   45.5 cm
+I (22281) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   52.8 cm
+I (22291) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (22291) SENSOR:   Motor 5: level 4/7 (was 3)
+I (22721) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (22721) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  183.4 cm
+I (22721) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  161.2 cm
+I (22721) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.9 cm
+I (22731) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  185.0 cm
+I (22731) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (22741) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  198.6 cm
+I (22751) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (22751) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   46.2 cm
+I (22761) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   39.8 cm
+I (22761) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   46.9 cm
+I (22771) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (22771) SENSOR:   Motor 4: level 5/7 (was 4)
+I (22841) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  164.5 cm
+I (22841) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (22841) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.6 cm
+I (22851) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.2 cm
+I (22851) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  182.9 cm
+I (22861) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (22861) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  194.3 cm
+I (22871) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (22871) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   46.4 cm
+I (22881) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   40.2 cm
+I (22881) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   46.2 cm
+I (22891) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (22891) SENSOR:   Motor 4: level 4/7 (was 5)
+I (22961) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (22961) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (22961) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  165.6 cm
+I (22961) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.5 cm
+I (22971) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  187.0 cm
+I (22981) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (22981) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  196.9 cm
+I (22991) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (22991) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   43.2 cm
+I (23001) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   39.3 cm
+I (23001) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   46.6 cm
+I (23011) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (23011) SENSOR:   Motor 4: level 5/7 (was 4)
+I (23261) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (23261) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (23261) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.0 cm
+I (23261) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.9 cm
+I (23271) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  186.4 cm
+I (23271) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (23281) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  207.7 cm
+I (23281) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (23291) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   42.1 cm
+I (23301) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   38.4 cm
+I (23301) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   37.3 cm
+I (23311) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (23311) SENSOR:   Motor 5: level 5/7 (was 4)
+I (23381) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (23381) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  186.1 cm
+I (23381) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.3 cm
+I (23381) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.3 cm
+I (23391) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  182.1 cm
+I (23391) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (23401) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  198.0 cm
+I (23401) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (23411) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   41.4 cm
+I (23421) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   36.6 cm
+I (23421) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   42.4 cm
+I (23431) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (23431) SENSOR:   Motor 5: level 4/7 (was 5)
+I (23681) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (23681) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  187.8 cm
+I (23681) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  161.5 cm
+I (23681) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.5 cm
+I (23691) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  193.4 cm
+I (23691) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  173.1 cm
+I (23701) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  199.4 cm
+I (23701) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (23711) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   38.4 cm
+I (23711) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   34.8 cm
+I (23721) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   42.0 cm
+I (23731) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (23731) SENSOR:   Motor 3: level 5/7 (was 4)
+I (23801) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (23801) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  183.3 cm
+I (23801) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  162.3 cm
+I (23801) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.4 cm
+I (23811) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  187.8 cm
+I (23811) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (23821) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  201.2 cm
+I (23821) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (23831) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   40.0 cm
+I (23841) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   33.6 cm
+I (23841) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   40.5 cm
+I (23851) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (23851) SENSOR:   Motor 3: level 4/7 (was 5)
+I (23921) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (23921) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (23921) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.7 cm
+I (23921) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.1 cm
+I (23931) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  187.0 cm
+I (23931) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (23941) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  197.2 cm
+I (23951) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (23951) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   36.4 cm
+I (23961) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   32.2 cm
+I (23961) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (23971) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (23971) SENSOR:   Motor 3: level 5/7 (was 4)
+I (23981) SENSOR:   Motor 5: level 3/7 (was 4)
+I (24041) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (24041) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  184.9 cm
+I (24041) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.2 cm
+I (24041) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  184.0 cm
+I (24051) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  181.9 cm
+I (24061) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  171.8 cm
+I (24061) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  195.3 cm
+I (24071) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (24071) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   39.8 cm
+I (24081) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   32.4 cm
+I (24081) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   40.3 cm
+I (24091) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (24091) SENSOR:   Motor 5: level 4/7 (was 3)
+I (24161) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (24161) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  185.8 cm
+I (24161) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.7 cm
+I (24161) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.0 cm
+I (24171) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  188.7 cm
+I (24171) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (24181) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  201.3 cm
+I (24181) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (24191) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   37.5 cm
+I (24201) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   31.8 cm
+I (24201) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   37.8 cm
+I (24211) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (24211) SENSOR:   Motor 5: level 5/7 (was 4)
+I (24401) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (24401) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  183.3 cm
+I (24401) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.1 cm
+I (24401) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.7 cm
+I (24411) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  185.8 cm
+I (24411) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (24421) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  199.3 cm
+I (24421) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (24431) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   36.7 cm
+I (24441) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   29.3 cm
+I (24441) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (24451) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (24451) SENSOR:   Motor 5: level 3/7 (was 5)
+I (24761) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (24761) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  188.5 cm
+I (24761) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.6 cm
+I (24761) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.8 cm
+I (24771) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  191.0 cm
+I (24771) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (24781) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  199.8 cm
+I (24781) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (24791) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (24801) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   26.4 cm
+I (24801) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (24811) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (24811) SENSOR:   Motor 3: level 3/7 (was 5)
+I (24941) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (24941) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  184.6 cm
+I (24941) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  165.2 cm
+I (24941) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.9 cm
+I (24951) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  183.4 cm
+I (24951) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (24961) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  205.8 cm
+I (24971) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (24971) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (24981) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   24.8 cm
+I (24981) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  819.0 cm
+I (24991) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (24991) SENSOR:   Motor 4: level 6/7 (was 5)
+I (26741) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (26741) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  186.8 cm
+I (26741) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.4 cm
+I (26741) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  184.2 cm
+I (26751) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  185.9 cm
+I (26751) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (26761) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  198.9 cm
+I (26761) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (26771) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  819.0 cm
+I (26781) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:    9.4 cm
+I (26781) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  819.0 cm
+I (26791) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (26791) SENSOR:   Motor 3: level 4/7 (was 3)
+I (26801) SENSOR:   Motor 4: level 7/7 (was 6)
+I (26801) SENSOR:   Motor 5: level 4/7 (was 3)
+I (28841) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  164.6 cm
+I (28841) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  186.8 cm
+I (28841) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.1 cm
+I (28841) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.5 cm
+I (28851) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  187.9 cm
+I (28851) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (28861) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  198.0 cm
+I (28871) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (28871) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  819.0 cm
+I (28881) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   10.3 cm
+I (28881) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  819.0 cm
+I (28891) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (28891) SENSOR:   Motor 3: level 3/7 (was 4)
+I (28901) SENSOR:   Motor 4: level 6/7 (was 7)
+I (28901) SENSOR:   Motor 5: level 3/7 (was 4)
+I (29981) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (29981) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  184.7 cm
+I (29981) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  165.2 cm
+I (29981) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.6 cm
+I (29991) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  182.2 cm
+I (29991) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (30001) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  196.2 cm
+I (30011) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (30011) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (30021) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   25.3 cm
+I (30021) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (30031) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (30031) SENSOR:   Motor 4: level 5/7 (was 6)
+I (30101) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (30101) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (30101) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.1 cm
+I (30101) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.3 cm
+I (30111) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  188.8 cm
+I (30111) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (30121) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  195.9 cm
+I (30131) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (30131) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   33.4 cm
+I (30141) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   26.4 cm
+I (30141) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  819.0 cm
+I (30151) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (30151) SENSOR:   Motor 3: level 5/7 (was 3)
+I (30341) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (30341) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  184.1 cm
+I (30341) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.3 cm
+I (30341) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.7 cm
+I (30351) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  181.2 cm
+I (30351) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (30361) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  201.8 cm
+I (30361) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (30371) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   35.6 cm
+I (30381) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   29.4 cm
+I (30381) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   30.4 cm
+I (30391) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (30391) SENSOR:   Motor 5: level 5/7 (was 3)
+I (30461) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (30461) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (30461) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.8 cm
+I (30461) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.4 cm
+I (30471) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  187.8 cm
+I (30471) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (30481) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  205.1 cm
+I (30481) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (30491) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   36.3 cm
+I (30501) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   31.6 cm
+I (30501) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (30511) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (30511) SENSOR:   Motor 5: level 3/7 (was 5)
+I (30581) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (30581) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  183.5 cm
+I (30581) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.2 cm
+I (30581) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.9 cm
+I (30591) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  181.9 cm
+I (30591) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (30601) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  198.2 cm
+I (30611) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (30611) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   37.2 cm
+I (30621) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   32.2 cm
+I (30621) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   30.3 cm
+I (30631) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (30631) SENSOR:   Motor 5: level 5/7 (was 3)
+I (30701) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  161.1 cm
+I (30701) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  188.6 cm
+I (30701) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.4 cm
+I (30701) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.2 cm
+I (30711) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  190.5 cm
+I (30721) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (30721) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  204.1 cm
+I (30731) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (30731) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   39.4 cm
+I (30741) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   33.3 cm
+I (30741) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (30751) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (30751) SENSOR:   Motor 5: level 3/7 (was 5)
+I (30821) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  166.2 cm
+I (30821) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (30821) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.6 cm
+I (30821) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  184.2 cm
+I (30831) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  183.8 cm
+I (30831) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (30841) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  198.9 cm
+I (30851) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (30851) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   37.8 cm
+I (30861) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   34.0 cm
+I (30861) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   38.4 cm
+I (30871) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (30871) SENSOR:   Motor 5: level 5/7 (was 3)
+I (30941) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (30941) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  189.4 cm
+I (30941) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.2 cm
+I (30941) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.9 cm
+I (30951) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  179.1 cm
+I (30951) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (30961) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  196.8 cm
+I (30971) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (30971) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   40.6 cm
+I (30981) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   35.1 cm
+I (30981) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   41.2 cm
+I (30991) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (30991) SENSOR:   Motor 3: level 4/7 (was 5)
+I (31001) SENSOR:   Motor 5: level 4/7 (was 5)
+I (31601) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (31601) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  183.9 cm
+I (31601) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  165.1 cm
+I (31601) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.3 cm
+I (31611) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  183.4 cm
+I (31611) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (31621) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  195.6 cm
+I (31621) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (31631) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   47.0 cm
+I (31641) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   40.3 cm
+I (31641) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   43.8 cm
+I (31651) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (31651) SENSOR:   Motor 4: level 4/7 (was 5)
+I (32501) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  159.8 cm
+I (32501) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  185.6 cm
+I (32501) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.3 cm
+I (32501) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.9 cm
+I (32511) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  188.3 cm
+I (32511) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (32521) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  191.2 cm
+I (32521) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (32531) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (32541) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   48.4 cm
+I (32541) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   50.6 cm
+I (32551) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (32551) SENSOR:   Motor 3: level 2/7 (was 4)
+I (32621) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (32621) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  183.7 cm
+I (32621) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.2 cm
+I (32621) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.8 cm
+I (32631) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  190.6 cm
+I (32631) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (32641) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  199.7 cm
+I (32651) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (32651) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   57.3 cm
+I (32661) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   47.9 cm
+I (32661) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   52.2 cm
+I (32671) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (32671) SENSOR:   Motor 3: level 3/7 (was 2)
+I (32741) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  162.1 cm
+I (32741) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  186.4 cm
+I (32741) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.2 cm
+I (32741) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.3 cm
+I (32751) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  188.0 cm
+I (32751) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (32761) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  203.6 cm
+I (32771) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (32771) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   57.7 cm
+I (32781) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   49.0 cm
+I (32781) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   57.2 cm
+I (32791) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (32791) SENSOR:   Motor 5: level 3/7 (was 4)
+I (33401) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (33401) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  186.4 cm
+I (33401) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.9 cm
+I (33401) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.7 cm
+I (33411) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  190.8 cm
+I (33411) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (33421) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  197.4 cm
+I (33421) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (33431) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   60.2 cm
+I (33441) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   56.1 cm
+I (33441) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   60.2 cm
+I (33451) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (33451) SENSOR:   Motor 4: level 3/7 (was 4)
+I (33581) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (33581) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (33581) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.2 cm
+I (33581) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.4 cm
+I (33591) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  186.5 cm
+I (33591) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (33601) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  200.9 cm
+I (33601) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (33611) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   63.4 cm
+I (33611) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   54.9 cm
+I (33621) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   57.7 cm
+I (33631) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (33631) SENSOR:   Motor 4: level 4/7 (was 3)
+I (33691) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  164.5 cm
+I (33691) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  188.4 cm
+I (33691) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.3 cm
+I (33691) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  184.1 cm
+I (33701) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  183.5 cm
+I (33701) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (33711) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  999.0 cm
+I (33711) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (33721) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   62.0 cm
+I (33731) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   59.4 cm
+I (33731) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   61.7 cm
+I (33741) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  999.0 cm
+I (33741) SENSOR:   Motor 4: level 3/7 (was 4)
+I (34231) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  162.8 cm
+I (34231) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  187.1 cm
+I (34231) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.5 cm
+I (34231) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  184.1 cm
+I (34241) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  184.9 cm
+I (34241) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (34251) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  193.5 cm
+I (34251) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (34261) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   77.7 cm
+I (34271) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   60.8 cm
+I (34271) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   68.3 cm
+I (34281) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (34281) SENSOR:   Motor 3: level 2/7 (was 3)
+I (34411) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  164.6 cm
+I (34411) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  188.3 cm
+I (34411) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  162.1 cm
+I (34411) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.7 cm
+I (34421) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  184.2 cm
+I (34421) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (34431) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  189.2 cm
+I (34431) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (34441) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   67.7 cm
+I (34451) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   62.0 cm
+I (34451) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   68.1 cm
+I (34461) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (34461) SENSOR:   Motor 3: level 3/7 (was 2)
+I (34531) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (34531) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  186.3 cm
+I (34531) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  162.9 cm
+I (34531) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.9 cm
+I (34541) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  184.5 cm
+I (34551) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  172.1 cm
+I (34551) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  187.0 cm
+I (34561) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (34561) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   79.6 cm
+I (34571) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   65.3 cm
+I (34571) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   76.5 cm
+I (34581) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (34581) SENSOR:   Motor 3: level 2/7 (was 3)
+I (34591) SENSOR:   Motor 5: level 2/7 (was 3)
+I (34891) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (34891) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  182.9 cm
+I (34891) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.6 cm
+I (34891) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.9 cm
+I (34901) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  199.5 cm
+I (34901) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (34911) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  159.7 cm
+I (34921) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (34921) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   82.4 cm
+I (34931) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   70.4 cm
+I (34931) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   77.7 cm
+I (34941) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (34941) SENSOR:   Motor 4: level 2/7 (was 3)
+I (35011) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (35011) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  185.3 cm
+I (35011) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.1 cm
+I (35011) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  184.3 cm
+I (35021) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  183.7 cm
+I (35021) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (35031) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  158.4 cm
+I (35041) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (35041) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   86.7 cm
+I (35051) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   68.5 cm
+I (35051) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   75.1 cm
+I (35061) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (35061) SENSOR:   Motor 4: level 3/7 (was 2)
+I (35131) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (35131) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  185.0 cm
+I (35131) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.0 cm
+I (35131) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.9 cm
+I (35141) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  187.4 cm
+I (35141) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (35151) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  162.1 cm
+I (35151) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (35161) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   85.3 cm
+I (35171) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   73.5 cm
+I (35171) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (35181) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (35181) SENSOR:   Motor 3: level 1/7 (was 2)
+I (35191) SENSOR:   Motor 4: level 2/7 (was 3)
+I (35191) SENSOR:   Motor 5: level 1/7 (was 2)
+I (35491) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (35491) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (35491) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.8 cm
+I (35491) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.6 cm
+I (35501) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  193.0 cm
+I (35501) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  174.6 cm
+I (35511) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  145.0 cm
+I (35511) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (35521) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (35521) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   79.4 cm
+I (35531) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:   77.1 cm
+I (35541) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (35541) SENSOR:   Motor 5: level 2/7 (was 1)
+I (35611) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (35611) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (35611) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.2 cm
+I (35611) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  182.5 cm
+I (35621) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  185.5 cm
+I (35621) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (35631) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  999.0 cm
+I (35631) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (35641) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:   89.3 cm
+I (35651) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   75.2 cm
+I (35651) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (35661) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (35661) SENSOR:   Motor 5: level 1/7 (was 2)
+I (36271) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  162.7 cm
+I (36271) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (36271) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.0 cm
+I (36271) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.4 cm
+I (36281) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  183.9 cm
+I (36281) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (36291) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  141.5 cm
+I (36291) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (36301) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (36311) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:  999.0 cm
+I (36311) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (36321) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (36321) SENSOR:   Motor 3: level 0/7 (was 1)
+I (36331) SENSOR:   Motor 4: level 0/7 (was 2)
+I (36331) SENSOR:   Motor 5: level 0/7 (was 1)
+I (36391) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (36391) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (36391) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.5 cm
+I (36391) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.6 cm
+I (36401) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  190.5 cm
+I (36401) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (36411) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  140.7 cm
+I (36421) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (36421) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (36431) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   86.3 cm
+I (36431) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (36441) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (36441) SENSOR:   Motor 3: level 1/7 (was 0)
+I (36451) SENSOR:   Motor 4: level 1/7 (was 0)
+I (36451) SENSOR:   Motor 5: level 1/7 (was 0)
+I (36571) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (36571) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  185.2 cm
+I (36571) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  163.0 cm
+I (36571) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.1 cm
+I (36581) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  181.2 cm
+I (36581) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  171.6 cm
+I (36591) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  130.1 cm
+I (36601) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (36601) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (36611) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:  999.0 cm
+I (36611) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (36621) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (36621) SENSOR:   Motor 3: level 0/7 (was 1)
+I (36631) SENSOR:   Motor 4: level 0/7 (was 1)
+I (36631) SENSOR:   Motor 5: level 0/7 (was 1)
+I (36691) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (36691) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  188.9 cm
+I (36691) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  165.5 cm
+I (36691) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.2 cm
+I (36701) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  194.8 cm
+I (36701) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (36711) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  133.8 cm
+I (36711) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (36721) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (36731) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   88.6 cm
+I (36731) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (36741) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (36741) SENSOR:   Motor 3: level 1/7 (was 0)
+I (36751) SENSOR:   Motor 4: level 1/7 (was 0)
+I (36751) SENSOR:   Motor 5: level 1/7 (was 0)
+I (36811) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (36811) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  187.1 cm
+I (36811) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.8 cm
+I (36811) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.1 cm
+I (36821) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  187.7 cm
+I (36821) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (36831) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  148.6 cm
+I (36841) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (36841) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (36851) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:  999.0 cm
+I (36851) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (36861) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (36861) SENSOR:   Motor 3: level 0/7 (was 1)
+I (36871) SENSOR:   Motor 4: level 0/7 (was 1)
+I (36871) SENSOR:   Motor 5: level 0/7 (was 1)
+I (37231) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (37231) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (37231) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  162.9 cm
+I (37231) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.3 cm
+I (37241) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  190.0 cm
+I (37241) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (37251) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  149.0 cm
+I (37251) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (37261) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (37271) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   94.8 cm
+I (37271) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (37281) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (37281) SENSOR:   Motor 3: level 1/7 (was 0)
+I (37291) SENSOR:   Motor 4: level 1/7 (was 0)
+I (37291) SENSOR:   Motor 5: level 1/7 (was 0)
+I (37411) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (37411) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  999.0 cm
+I (37411) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.4 cm
+I (37411) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.5 cm
+I (37421) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  183.8 cm
+I (37421) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (37431) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  136.1 cm
+I (37431) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (37441) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  123.6 cm
+I (37441) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:  999.0 cm
+I (37451) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  819.0 cm
+I (37461) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (37461) SENSOR:   Motor 3: level 0/7 (was 1)
+I (37471) SENSOR:   Motor 4: level 0/7 (was 1)
+I (37471) SENSOR:   Motor 5: level 0/7 (was 1)
+I (38071) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (38071) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  182.6 cm
+I (38071) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  164.3 cm
+I (38071) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  184.0 cm
+I (38081) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  186.2 cm
+I (38081) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (38091) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  152.0 cm
+I (38101) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (38101) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  999.0 cm
+I (38111) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:   99.1 cm
+I (38111) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (38121) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (38121) SENSOR:   Motor 3: level 1/7 (was 0)
+I (38131) SENSOR:   Motor 4: level 1/7 (was 0)
+I (38131) SENSOR:   Motor 5: level 1/7 (was 0)
+I (38201) SENSOR:   mux 0x71 ch0 (L1X) -> index 0:  999.0 cm
+I (38201) SENSOR:   mux 0x71 ch1 (L1X) -> index 10:  186.5 cm
+I (38201) SENSOR:   mux 0x71 ch2 (L1X) -> index 11:  162.2 cm
+I (38201) SENSOR:   mux 0x71 ch3 (L1X) -> index 1:  183.0 cm
+I (38211) SENSOR:   mux 0x71 ch4 (L1X) -> index 2:  184.6 cm
+I (38211) SENSOR:   mux 0x71 ch5 (L1X) -> index 8:  999.0 cm
+I (38221) SENSOR:   mux 0x71 ch6 (L1X) -> index 9:  128.2 cm
+I (38231) SENSOR:   mux 0x70 ch0 (L0X) -> index 3:  819.0 cm
+I (38231) SENSOR:   mux 0x70 ch1 (L0X) -> index 4:  819.0 cm
+I (38241) SENSOR:   mux 0x70 ch2 (L0X) -> index 5:  999.0 cm
+I (38241) SENSOR:   mux 0x70 ch3 (L0X) -> index 6:  999.0 cm
+I (38251) SENSOR:   mux 0x70 ch4 (L0X) -> index 7:  819.0 cm
+I (38251) SENSOR:   Motor 3: level 0/7 (was 1)
+I (38261) SENSOR:   Motor 4: level 0/7 (was 1)
+I (38261) SENSOR:   Motor 5: level 0/7 (was 1)
