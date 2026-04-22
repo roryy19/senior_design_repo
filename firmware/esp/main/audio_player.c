@@ -50,6 +50,10 @@ static void audio_task(void *arg)
         /* Wait until a new clip is loaded */
         xSemaphoreTake(s_start_sem, portMAX_DELAY);
 
+        /* Enable I2S only while playing — avoids BCLK/LRC running into a
+         * stale DMA ring between clips, which MAX98357A amplifies as clicks. */
+        i2s_channel_enable(s_tx_chan);
+
         while (s_pos < s_len && !s_stop_req) {
             /* Pull up to CHUNK_SAMPLES_IN bytes from the source clip */
             size_t take = s_len - s_pos;
@@ -69,11 +73,17 @@ static void audio_task(void *arg)
                               &bytes_written, portMAX_DELAY);
         }
 
-        /* Tail silence: one chunk of zeros to flush DMA and drop the line */
+        /* Tail silence: flush DMA ring with zeros before disabling so the
+         * last thing the amp sees is silence, not stale clip samples. Default
+         * ring ≈ 6×240 frames (~90ms); write generously to cover it. */
         memset(out_buf, 0, sizeof(out_buf));
-        size_t bytes_written = 0;
-        i2s_channel_write(s_tx_chan, out_buf, sizeof(out_buf),
-                          &bytes_written, portMAX_DELAY);
+        for (int i = 0; i < 8; i++) {
+            size_t bytes_written = 0;
+            i2s_channel_write(s_tx_chan, out_buf, sizeof(out_buf),
+                              &bytes_written, portMAX_DELAY);
+        }
+
+        i2s_channel_disable(s_tx_chan);
 
         s_playing = false;
         s_stop_req = false;
@@ -104,7 +114,8 @@ void audio_player_init(gpio_num_t bclk, gpio_num_t lrc, gpio_num_t din)
         },
     };
     ESP_ERROR_CHECK(i2s_channel_init_std_mode(s_tx_chan, &std_cfg));
-    ESP_ERROR_CHECK(i2s_channel_enable(s_tx_chan));
+    /* Channel stays disabled until first clip plays; task enables/disables
+     * around each playback to keep BCLK dead when idle (click-free amp). */
 
     /* Semaphore for play() → task */
     s_start_sem = xSemaphoreCreateBinary();
