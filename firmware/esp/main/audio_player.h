@@ -1,12 +1,12 @@
 /*
- * audio_player.h — PWM-based audio playback for ESP32-S3
+ * audio_player.h — I2S audio playback to MAX98357A (ESP32-S3)
  *
- * The ESP32-S3 has no built-in DAC. Audio is output via LEDC PWM on a
- * single GPIO pin. A simple RC low-pass filter (10kOhm + 0.1uF) converts
- * the PWM to analog for the LM386 amplifier.
+ * Output path: ESP32-S3 I2S0 (standard Philips mode, mono, 16-bit) →
+ *   MAX98357A Class-D amp → speaker. No RC filter, no LM386.
  *
- * Audio format: 8-bit unsigned PCM, 8kHz, mono.
- * Silence = 128 (midpoint of 0-255 range).
+ * Clip format in SPIFFS is unchanged: 8-bit unsigned PCM, 8 kHz, mono
+ * (silence = 128). The player widens samples to signed 16-bit and
+ * upsamples 2x (nearest-neighbor) to 16 kHz on the fly before I2S write.
  */
 
 #pragma once
@@ -20,17 +20,20 @@ extern "C" {
 #endif
 
 /*
- * Initialize the PWM audio output on the specified GPIO pin.
+ * Initialize the I2S output for the MAX98357A.
  * Call once from app_main.
+ *   bclk: serial bit clock pin (BCLK)
+ *   lrc:  left/right (word select / LRCLK) pin
+ *   din:  data input to DAC (DIN)
  */
-void audio_player_init(gpio_num_t gpio);
+void audio_player_init(gpio_num_t bclk, gpio_num_t lrc, gpio_num_t din);
 
 /*
  * Play an audio clip (non-blocking).
- * The data is NOT copied — the caller must keep the buffer valid until
- * playback completes (check with audio_player_is_playing()).
+ * The caller must keep pcm_data valid until playback finishes
+ * (check with audio_player_is_playing()).
  *
- * pcm_data: 8-bit unsigned PCM samples at 8kHz.
+ * pcm_data: 8-bit unsigned PCM samples at 8 kHz.
  * length:   number of samples (= number of bytes).
  */
 void audio_player_play(const uint8_t *pcm_data, size_t length);
@@ -38,7 +41,7 @@ void audio_player_play(const uint8_t *pcm_data, size_t length);
 /* Returns true if a clip is currently playing. */
 bool audio_player_is_playing(void);
 
-/* Stop playback immediately and return output to silence. */
+/* Stop playback immediately. */
 void audio_player_stop(void);
 
 #ifdef __cplusplus

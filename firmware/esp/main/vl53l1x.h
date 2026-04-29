@@ -9,15 +9,20 @@
  * The sensor's default configuration blob (from ST's Ultra Lite Driver)
  * is embedded directly in vl53l1x.c.
  *
- * Hardcoded for single-sensor use at I2C address 0x29.
- * Configured for Long distance mode (up to 4m) with 50ms timing budget,
- * matching the teammate's Arduino settings.
+ * Supports two modes:
+ *   1. Single-sensor: call vl53l1x_init() (creates bus + device + inits sensor)
+ *   2. Multi-sensor via mux: call vl53l1x_create_on_bus() once, then
+ *      vl53l1x_sensor_init() for each sensor after selecting its mux channel
+ *
+ * All sensors share I2C address 0x29. When using a multiplexer, switch
+ * the mux channel before any vl53l1x_* call to talk to the right sensor.
  */
 
 #pragma once
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "driver/i2c_master.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,19 +35,57 @@ typedef enum {
 } vl53l1x_err_t;
 
 /*
- * Initialize I2C bus + VL53L1X sensor.
+ * Initialize I2C bus + VL53L1X sensor (single-sensor convenience).
  *
  * What this does (Arduino equivalent in parentheses):
  *   1. Creates the I2C master bus on GPIO 8/9 at 400kHz  (Wire.begin(8, 9))
- *   2. Waits for sensor firmware to boot                 (automatic in Pololu init)
- *   3. Writes the 91-byte default configuration          (sensor.init())
- *   4. Sets Long distance mode (up to 4m)                (sensor.setDistanceMode(Long))
- *   5. Sets 50ms timing budget                           (sensor.setMeasurementTimingBudget(50000))
+ *   2. Adds device at address 0x29
+ *   3. Runs full sensor init (boot wait, config, calibration, mode setup)
+ *
+ * This is a convenience wrapper. For multi-sensor setups with a mux,
+ * use vl53l1x_create_on_bus() + vl53l1x_sensor_init() instead.
  *
  * Call once from app_main, before vl53l1x_start_ranging().
  * Returns VL53L1X_OK on success, or an error code if the sensor isn't found.
  */
 vl53l1x_err_t vl53l1x_init(void);
+
+/*
+ * Add the VL53L1X device to an existing I2C bus (for mux configurations).
+ *
+ * Call this ONCE after creating the I2C bus and initializing the mux.
+ * This only registers the device at address 0x29 on the bus — it does
+ * NOT run the sensor init sequence.
+ *
+ * After this, select a mux channel and call vl53l1x_sensor_init() for
+ * each physical sensor.
+ *
+ * @param bus  I2C master bus handle (created externally)
+ */
+vl53l1x_err_t vl53l1x_create_on_bus(i2c_master_bus_handle_t bus);
+
+/*
+ * Set the I2C device handle directly (alternative to vl53l1x_create_on_bus).
+ *
+ * Use this when the caller creates the device handle externally (e.g.,
+ * when sharing a device handle between VL53L1X and VL53L0X drivers).
+ * Both sensor types share I2C address 0x29.
+ */
+void vl53l1x_set_device(i2c_master_dev_handle_t dev);
+
+/*
+ * Run the sensor initialization sequence on the currently-selected sensor.
+ *
+ * Performs: model ID check, firmware boot wait, default config write,
+ * calibration measurement, Long mode + 50ms timing budget setup.
+ *
+ * For multi-sensor setups: select the mux channel BEFORE calling this.
+ * Call once per physical sensor.
+ *
+ * Requires that either vl53l1x_init() or vl53l1x_create_on_bus() was
+ * called first (device handle must exist).
+ */
+vl53l1x_err_t vl53l1x_sensor_init(void);
 
 /*
  * Start continuous ranging measurements.

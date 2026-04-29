@@ -3,7 +3,15 @@ import { View, Text, FlatList, Pressable, Modal, TextInput, Alert } from "react-
 import { Stack } from "expo-router";
 
 import type { PlacedSensor } from "../src/domain/types";
-import { loadSensors, saveSensors, updateSensor, removeSensor } from "../src/storage/registry";
+import {
+  loadSensors,
+  saveSensors,
+  updateSensor,
+  removeSensor,
+  loadRssiThreshold,
+  saveRssiThreshold,
+  DEFAULT_RSSI_THRESHOLD,
+} from "../src/storage/registry";
 import { useFontSize } from "../src/context/FontSizeContext";
 import { useBle } from "../src/context/BleContext";
 import { generateSpeechAudio } from "../src/native/TtsSynthesizer";
@@ -21,18 +29,18 @@ export default function SensorListScreen() {
   const { fontScale } = useFontSize();
   const { sendAudioToBeacon, registerBeacon, deleteBeacon, sendRssiThreshold, lastAlert, beaconRssi } = useBle();
   const [isSending, setIsSending] = useState(false);
-  const [threshold, setThreshold] = useState('-75');
-  const [savedThreshold, setSavedThreshold] = useState(-75);
-  const leaveThreshold = (parseInt(threshold) || -75) - 5;
-  const DEFAULT_THRESHOLD = -75;
+  const [threshold, setThreshold] = useState(String(DEFAULT_RSSI_THRESHOLD));
+  const [savedThreshold, setSavedThreshold] = useState(DEFAULT_RSSI_THRESHOLD);
+  const leaveThreshold = (parseInt(threshold) || DEFAULT_RSSI_THRESHOLD) - 5;
 
   function applyThreshold() {
     let val = parseInt(threshold);
-    if (isNaN(val)) val = DEFAULT_THRESHOLD;
+    if (isNaN(val)) val = DEFAULT_RSSI_THRESHOLD;
     if (val > -55) val = -55;
     if (val < -85) val = -85;
     setThreshold(String(val));
     setSavedThreshold(val);
+    saveRssiThreshold(val);
     sendRssiThreshold(val);
   }
   const pendingMacRef = useRef<string | null>(null);
@@ -52,6 +60,15 @@ export default function SensorListScreen() {
     (async () => {
       const saved = await loadSensors();
       setSensors(saved);
+    })();
+  }, []);
+
+  // Load persisted RSSI threshold so it survives screen unmount / app restart
+  useEffect(() => {
+    (async () => {
+      const saved = await loadRssiThreshold();
+      setThreshold(String(saved));
+      setSavedThreshold(saved);
     })();
   }, []);
 
@@ -298,9 +315,10 @@ export default function SensorListScreen() {
           </Pressable>
           <Pressable
             onPress={() => {
-              setThreshold(String(DEFAULT_THRESHOLD));
-              setSavedThreshold(DEFAULT_THRESHOLD);
-              sendRssiThreshold(DEFAULT_THRESHOLD);
+              setThreshold(String(DEFAULT_RSSI_THRESHOLD));
+              setSavedThreshold(DEFAULT_RSSI_THRESHOLD);
+              saveRssiThreshold(DEFAULT_RSSI_THRESHOLD);
+              sendRssiThreshold(DEFAULT_RSSI_THRESHOLD);
             }}
             style={{
               paddingVertical: 8,

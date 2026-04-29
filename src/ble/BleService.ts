@@ -8,7 +8,8 @@ import { BELT_SERVICE_UUID, ALERT_CHAR_UUID, CONFIG_CHAR_UUID } from './uuids';
 export type AlertPayload =
   | { type: 'beacon'; mac: string }
   | { type: 'obstacle'; directionIndex: number }
-  | { type: 'rssi_update'; mac: string; rssi: number };
+  | { type: 'rssi_update'; mac: string; rssi: number }
+  | { type: 'battery_low' };
 
 export type BleConnectionState = 'disconnected' | 'scanning' | 'connecting' | 'connected';
 
@@ -21,6 +22,7 @@ type AlertReceivedCb = (alert: AlertPayload) => void;
 //   [0x01, B0, B1, B2, B3, B4, B5]  → beacon detected, MAC = B0:B1:B2:B3:B4:B5
 //   [0x02, N]                        → obstacle, N = direction index (0=front … 7=front-left)
 //   [0x03, B0..B5, RSSI_offset]      → RSSI update, RSSI = RSSI_offset - 128
+//   [0x04]                           → battery-low alert (dismissible popup)
 //
 // Config characteristic (write, phone → belt):
 //   [0x01, N]                                      → set arm length to N cm (uint8)
@@ -370,6 +372,10 @@ class BleService {
           .join(':');
         const rssi = bytes[7] - 128;
         return { type: 'rssi_update', mac, rssi };
+      }
+
+      if (bytes[0] === 0x04 && bytes.length === 1) {
+        return { type: 'battery_low' };
       }
 
       return null;

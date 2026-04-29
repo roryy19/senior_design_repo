@@ -4,9 +4,18 @@ idf_component_register(
          "audio_player.c"
          "clip_storage.c"
          "vl53l1x.c"
+         "vl53l0x.c"
          "sensor_task.c"
+         "shift_register.c"
+         "pca9548a.c"
+         "battery_monitor.c"
          "distance_categorizer_wrapper.cpp"
+         "pipeline_wrapper.cpp"
          "../../src/core/distance_categorizer.cpp"
+         "../../src/core/motor_mapper.cpp"
+         "../../src/core/shift_register_packer.cpp"
+         "../../src/core/pipeline.cpp"
     INCLUDE_DIRS "."
                  "../../src/core"
+    REQUIRES nvs_flash spiffs bt driver esp_driver_i2s esp_adc
 )

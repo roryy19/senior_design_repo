@@ -5,6 +5,8 @@ import { jsx } from "react/jsx-runtime";
 const KEY = "placed_sensors_v1"
 const USER_DIMENSIONS_KEY = "user_dimensions_v1"
 const FONT_SCALE_KEY = "font_scale_v1"
+const RSSI_THRESHOLD_KEY = "rssi_threshold_v1"
+export const DEFAULT_RSSI_THRESHOLD = -70;
 
 // note - promise = type-safe way to handle async ops, value doesnt have to be present
 export async function loadSensors(): Promise<PlacedSensor[]> {
@@ -88,4 +90,16 @@ export async function loadFontScale(): Promise<number> {
 
 export async function saveFontScale(scale: number): Promise<void> {
     await AsyncStorage.setItem(FONT_SCALE_KEY, String(scale));
+}
+
+// RSSI detection threshold storage
+export async function loadRssiThreshold(): Promise<number> {
+    const raw = await AsyncStorage.getItem(RSSI_THRESHOLD_KEY);
+    if (!raw) return DEFAULT_RSSI_THRESHOLD;
+    const parsed = parseInt(raw, 10);
+    return isNaN(parsed) ? DEFAULT_RSSI_THRESHOLD : parsed;
+}
+
+export async function saveRssiThreshold(threshold: number): Promise<void> {
+    await AsyncStorage.setItem(RSSI_THRESHOLD_KEY, String(threshold));
 }

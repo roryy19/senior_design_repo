@@ -1,132 +1,164 @@
 /*
- * audio_player.c — PWM-based audio playback for ESP32-S3
+ * audio_player.c — I2S audio playback to MAX98357A (ESP32-S3)
  *
- * Uses the LEDC peripheral to output a high-frequency PWM signal whose
- * duty cycle represents the audio sample value. An esp_timer callback
- * runs at 8kHz to advance through the PCM buffer.
+ * Hardware:
+ *   ESP32-S3 I2S0 master TX →
+ *     BCLK → MAX98357A BCLK
+ *     LRC  → MAX98357A LRC (word select)
+ *     DIN  → MAX98357A DIN
+ *   MAX98357A output → speaker. No MCLK needed.
  *
- * Hardware connection:
- *   ESP32 GPIO -> 10kOhm resistor -> LM386 input
- *                                 |
- *                            0.1uF cap
- *                                 |
- *                                GND
+ * Source clips are 8 kHz 8-bit unsigned PCM in SPIFFS. This module
+ * widens them to signed 16-bit and upsamples 2x (nearest-neighbor)
+ * to 16 kHz while feeding the I2S channel. A dedicated FreeRTOS
+ * task drains clips; audio_player_play() signals it via semaphore.
  */
 
 #include "audio_player.h"
 
-#include "driver/ledc.h"
-#include "esp_timer.h"
+#include <string.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
+#include "driver/i2s_std.h"
 #include "esp_log.h"
 
 static const char *TAG = "AUDIO";
 
-/* PWM configuration */
-#define PWM_FREQ_HZ       62500           /* ~62.5kHz — inaudible carrier */
-#define PWM_SPEED_MODE    LEDC_LOW_SPEED_MODE
-#define PWM_TIMER         LEDC_TIMER_0
-#define PWM_CHANNEL       LEDC_CHANNEL_0
-#define PWM_DUTY_SILENCE  128             /* Midpoint = silence for unsigned 8-bit */
+/* I2S output format */
+#define I2S_SAMPLE_RATE_HZ   16000      /* 2x the 8kHz source; simple upsample */
+#define CHUNK_SAMPLES_IN     128        /* 8-bit samples read per iteration */
+#define CHUNK_SAMPLES_OUT    (CHUNK_SAMPLES_IN * 2)  /* 16-bit, 2x upsample */
 
-/* Sample rate timer */
-#define SAMPLE_PERIOD_US  125             /* 1,000,000 / 8000 Hz = 125 us */
+/* Playback state (set before giving semaphore) */
+static const uint8_t   *s_pcm = NULL;
+static size_t           s_len = 0;
+static volatile size_t  s_pos = 0;
+static volatile bool    s_playing = false;
+static volatile bool    s_stop_req = false;
 
-/* Playback state */
-static const uint8_t *current_pcm = NULL;
-static size_t current_len = 0;
-static size_t current_pos = 0;
-static volatile bool playing = false;
+static SemaphoreHandle_t s_start_sem = NULL;
+static i2s_chan_handle_t s_tx_chan = NULL;
 
-static esp_timer_handle_t sample_timer = NULL;
+/* ---------- I2S writer task ---------- */
 
-/* ---------- Timer callback: runs at 8kHz ---------- */
-
-static void IRAM_ATTR sample_timer_cb(void *arg)
+static void audio_task(void *arg)
 {
-    if (current_pos < current_len) {
-        ledc_set_duty(PWM_SPEED_MODE, PWM_CHANNEL, current_pcm[current_pos]);
-        ledc_update_duty(PWM_SPEED_MODE, PWM_CHANNEL);
-        current_pos++;
-    } else {
-        /* Clip finished — stop timer, return to silence */
-        esp_timer_stop(sample_timer);
-        ledc_set_duty(PWM_SPEED_MODE, PWM_CHANNEL, PWM_DUTY_SILENCE);
-        ledc_update_duty(PWM_SPEED_MODE, PWM_CHANNEL);
-        playing = false;
+    int16_t out_buf[CHUNK_SAMPLES_OUT];
+
+    for (;;) {
+        /* Wait until a new clip is loaded */
+        xSemaphoreTake(s_start_sem, portMAX_DELAY);
+
+        /* Enable I2S only while playing — avoids BCLK/LRC running into a
+         * stale DMA ring between clips, which MAX98357A amplifies as clicks. */
+        i2s_channel_enable(s_tx_chan);
+
+        while (s_pos < s_len && !s_stop_req) {
+            /* Pull up to CHUNK_SAMPLES_IN bytes from the source clip */
+            size_t take = s_len - s_pos;
+            if (take > CHUNK_SAMPLES_IN) take = CHUNK_SAMPLES_IN;
+
+            /* Widen + upsample 2x: each 8-bit unsigned sample → two signed 16-bit */
+            for (size_t i = 0; i < take; i++) {
+                int16_t v = ((int16_t)s_pcm[s_pos + i] - 128) << 8;
+                out_buf[2 * i]     = v;
+                out_buf[2 * i + 1] = v;
+            }
+            s_pos += take;
+
+            /* Blocking write at the sample rate (16 kHz) */
+            size_t bytes_written = 0;
+            i2s_channel_write(s_tx_chan, out_buf, take * 2 * sizeof(int16_t),
+                              &bytes_written, portMAX_DELAY);
+        }
+
+        /* Tail silence: flush DMA ring with zeros before disabling so the
+         * last thing the amp sees is silence, not stale clip samples. Default
+         * ring ≈ 6×240 frames (~90ms); write generously to cover it. */
+        memset(out_buf, 0, sizeof(out_buf));
+        for (int i = 0; i < 8; i++) {
+            size_t bytes_written = 0;
+            i2s_channel_write(s_tx_chan, out_buf, sizeof(out_buf),
+                              &bytes_written, portMAX_DELAY);
+        }
+
+        i2s_channel_disable(s_tx_chan);
+
+        s_playing = false;
+        s_stop_req = false;
+        ESP_LOGI(TAG, "Clip finished");
     }
 }
 
 /* ---------- Public API ---------- */
 
-void audio_player_init(gpio_num_t gpio)
+void audio_player_init(gpio_num_t bclk, gpio_num_t lrc, gpio_num_t din)
 {
-    /* Configure LEDC timer */
-    ledc_timer_config_t timer_cfg = {
-        .speed_mode      = PWM_SPEED_MODE,
-        .duty_resolution = LEDC_TIMER_8_BIT,   /* 256 levels = matches 8-bit PCM */
-        .timer_num       = PWM_TIMER,
-        .freq_hz         = PWM_FREQ_HZ,
-        .clk_cfg         = LEDC_AUTO_CLK,
-    };
-    ESP_ERROR_CHECK(ledc_timer_config(&timer_cfg));
+    /* Create TX channel on I2S0, master role */
+    i2s_chan_config_t chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
+    ESP_ERROR_CHECK(i2s_new_channel(&chan_cfg, &s_tx_chan, NULL));
 
-    /* Configure LEDC channel */
-    ledc_channel_config_t chan_cfg = {
-        .gpio_num   = gpio,
-        .speed_mode = PWM_SPEED_MODE,
-        .channel    = PWM_CHANNEL,
-        .timer_sel  = PWM_TIMER,
-        .duty       = PWM_DUTY_SILENCE,
-        .hpoint     = 0,
+    /* Standard Philips mode, 16-bit mono at 16 kHz */
+    i2s_std_config_t std_cfg = {
+        .clk_cfg  = I2S_STD_CLK_DEFAULT_CONFIG(I2S_SAMPLE_RATE_HZ),
+        .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT,
+                                                       I2S_SLOT_MODE_MONO),
+        .gpio_cfg = {
+            .mclk = I2S_GPIO_UNUSED,
+            .bclk = bclk,
+            .ws   = lrc,
+            .dout = din,
+            .din  = I2S_GPIO_UNUSED,
+            .invert_flags = { .mclk_inv = 0, .bclk_inv = 0, .ws_inv = 0 },
+        },
     };
-    ESP_ERROR_CHECK(ledc_channel_config(&chan_cfg));
+    ESP_ERROR_CHECK(i2s_channel_init_std_mode(s_tx_chan, &std_cfg));
+    /* Channel stays disabled until first clip plays; task enables/disables
+     * around each playback to keep BCLK dead when idle (click-free amp). */
 
-    /* Create the sample-rate timer (created once, started/stopped per clip) */
-    esp_timer_create_args_t timer_args = {
-        .callback        = sample_timer_cb,
-        .name            = "audio_sample",
-        .dispatch_method = ESP_TIMER_TASK,
-    };
-    ESP_ERROR_CHECK(esp_timer_create(&timer_args, &sample_timer));
+    /* Semaphore for play() → task */
+    s_start_sem = xSemaphoreCreateBinary();
 
-    ESP_LOGI(TAG, "Audio player initialized (GPIO %d, PWM %d Hz)",
-             gpio, PWM_FREQ_HZ);
+    /* Playback task (priority 6: higher than sensor=5, below NimBLE host) */
+    xTaskCreate(audio_task, "audio", 3072, NULL, 6, NULL);
+
+    ESP_LOGI(TAG, "Audio player initialized (I2S: BCLK=%d LRC=%d DIN=%d, %d Hz 16-bit)",
+             bclk, lrc, din, I2S_SAMPLE_RATE_HZ);
 }
 
 void audio_player_play(const uint8_t *pcm_data, size_t length)
 {
-    /* Stop any current playback first */
-    if (playing) {
-        audio_player_stop();
-    }
-
     if (length == 0 || pcm_data == NULL) return;
 
-    current_pcm = pcm_data;
-    current_len = length;
-    current_pos = 0;
-    playing = true;
+    /* If a clip is currently playing, ask it to stop first */
+    if (s_playing) {
+        s_stop_req = true;
+        /* Brief wait for the task to return to its top (no strict guarantee;
+         * worst case the new clip queues after the old finishes its chunk) */
+        for (int i = 0; i < 20 && s_playing; i++) {
+            vTaskDelay(pdMS_TO_TICKS(5));
+        }
+    }
+
+    s_pcm = pcm_data;
+    s_len = length;
+    s_pos = 0;
+    s_stop_req = false;
+    s_playing = true;
 
     ESP_LOGI(TAG, "Playing clip (%u bytes, %.1fs)",
              (unsigned)length, (float)length / 8000.0f);
 
-    /* Start the 8kHz sample timer */
-    esp_timer_start_periodic(sample_timer, SAMPLE_PERIOD_US);
+    xSemaphoreGive(s_start_sem);
 }
 
 bool audio_player_is_playing(void)
 {
-    return playing;
+    return s_playing;
 }
 
 void audio_player_stop(void)
 {
-    if (sample_timer) {
-        esp_timer_stop(sample_timer);
-    }
-
-    ledc_set_duty(PWM_SPEED_MODE, PWM_CHANNEL, PWM_DUTY_SILENCE);
-    ledc_update_duty(PWM_SPEED_MODE, PWM_CHANNEL);
-
-    playing = false;
+    if (s_playing) s_stop_req = true;
 }

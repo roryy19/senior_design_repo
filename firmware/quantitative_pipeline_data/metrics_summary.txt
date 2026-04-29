@@ -1,0 +1,56 @@
+
+===========================================================
+  SENSOR-TO-MOTOR PIPELINE -- HEADLINE METRICS
+===========================================================
+
+[1] Angular localization error (obstacle @ 50 cm, 360 deg sweep)
+       mean error      :   9.60 deg
+       max error       :  23.64 deg
+       std deviation   :   6.11 deg
+
+[2] 360 deg coverage (fraction of angles producing >=1 motor)
+       @  10.0 cm      : 100.00 %  (dead zones: 0)
+       @  25.0 cm      : 100.00 %  (dead zones: 0)
+       @  40.0 cm      : 100.00 %  (dead zones: 0)
+       @  55.0 cm      : 100.00 %  (dead zones: 0)
+       @  70.0 cm      : 100.00 %  (dead zones: 0)
+       @  85.0 cm      : 100.00 %  (dead zones: 0)
+       @ 100.0 cm      :   0.00 %  (dead zones: 360)
+
+[3] Motor count per single obstacle (obstacle @ 50 cm)
+       mean            :   2.20 motors active
+       min             : 2
+       max             : 3
+
+[4] Distance monotonicity (closer always >= farther level)
+       samples tested  : 1560
+       passing         : 1560
+       pass rate       : 100.00 %
+
+[5] Arm length scaling linearity (40-90 cm sweep, 7 levels)
+       level 1 R^2     : 0.9999
+       level 2 R^2     : 0.9998
+       level 3 R^2     : 0.9997
+       level 4 R^2     : 0.9995
+       level 5 R^2     : 0.9990
+       level 6 R^2     : 0.9975
+       level 7 R^2     : 0.9845
+       mean R^2        : 0.9971
+
+[6] Pipeline latency (100k random inputs)
+       mean            :   0.384 us
+       median          :   0.400 us
+       p99             :   0.600 us
+       throughput      :    2098341 iter/sec
+       headroom vs 50ms: 130067.1 x faster than sensor period
+
+[7] Multi-obstacle discrimination (both @ 30 cm)
+       min separation  : 19 deg
+       discrimination% :  89.50 % of tested separations
+
+[8] Monte Carlo robustness
+       runs            : 10000
+       passing         : 10000
+       pass rate       : 100.00 %
+
+===========================================================
